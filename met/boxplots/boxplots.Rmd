@@ -1,0 +1,116 @@
+---
+title: "Box plots of DNA methylation levels"
+output:
+  BiocStyle::html_document: 
+    toc: false
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(ggplot2)
+```
+
+<!-- Define I/O and options -->
+```{r define_opts, echo=FALSE}
+if (grepl("ricard",Sys.info()['nodename'])) {
+  source("/Users/ricard/Guo_2017/met/boxplots/load_settings.R")
+  source("/Users/ricard/Guo_2017/metacc/boxplots/utils.R")
+} else {
+  stop("Computer not recognised")
+}
+
+# Size of figures
+# opts$width = 10
+# opts$height = 5
+```
+
+<!-- Load methylation data -->
+```{r load_data, echo=FALSE, include=FALSE}
+met_dt <- lapply(names(opts$met.annos), function(n) {
+  fread(
+    file = sprintf("%s/%s.tsv.gz",io$met_data_parsed,n),
+    showProgress = F, header = F,
+    select = c("V1"="factor","V2"="character","V3"="factor","V4"="integer","V5"="integer","V6"="integer")
+    ) %>% .[V1%in%opts$met_cells] %>% droplevels
+}) %>% rbindlist %>% setnames(c("id_met","id","anno","Nmet","Ntotal","rate"))
+```
+
+<!-- Merge data with metadata -->
+```{r merge}
+met_dt <- merge(met_dt, sample_metadata[,c("id_met","stage")], by="id_met")
+```
+
+<!-- Load results from the differential analysis -->
+```{r}
+diff.met <- lapply(names(opts$met.annos), function(x)
+  # fread(sprintf("%s/E56ICM_vs_E56TE_%s.txt.gz",io$diff.met,x)) %>% .[,anno:=as.factor(x)]
+  fread(sprintf("%s/E6ICM_vs_E6TE_%s.txt.gz",io$diff.met,x)) %>% .[,anno:=as.factor(x)]
+) %>% rbindlist %>%
+  .[,sig:=padj_fdr<opts$min.fdr & abs(diff)>opts$min.met.diff] %>%
+  .[,c("id","anno","diff","sig")]
+```
+
+```{r}
+diff.met <- diff.met[diff>0]
+# diff.met <- diff.met[diff<0]
+```
+
+<!-- Subset data using the significant hits -->
+
+```{r}
+met_dt_sub <- met_dt %>% split(.$anno) %>%
+  map2(.,names(.), function(x,y) x[id%in%diff.met[sig==T & anno==y,id]]) %>%
+  rbindlist %>% droplevels
+```
+
+```{r}
+# fwrite(diff.met[sig==T], "/Users/ricard/data/gastrulation/met/results/differential/diffmet.txt", sep="\t")
+```
+
+<!-- Filter by minimum number of measurements per cell -->
+```{r}
+# opts$min.met.observations <- 10
+# met_dt_sub <- met_dt_sub[,N:=.N, by=c("sample","stage","anno")] %>%
+#   .[N>=opts$min.met.observations] %>% .[,N:=NULL]
+```
+
+<!-- Regress out differences in global methylation or accessibility rate -->
+```{r}
+# foo <- fread(io$met.stats) %>% .[,c("id_met","mean")]
+# met_dt_sub <- met_dt_sub %>% merge(foo, by="id_met") %>%
+#   .[,new_rate:=mean(rate) + lm(formula=rate~mean)[["residuals"]], by=c("id","anno")]
+```
+
+<!-- Boxplots with methylation rate per genomic context and stage -->
+```{r}
+to.plot <- met_dt_sub %>%
+  .[,.(
+    rate = 100*(sum(Nmet)/sum(Ntotal)), 
+    Nmet = sum(Nmet), 
+    Ntotal = sum(Ntotal)
+  ),by=c("id_met","stage","anno")] %>%
+   .[,anno:=stringr::str_replace_all(anno,opts$met.annos)]
+  # .[,stage:=factor(stage, levels=names(colors))]
+
+p <- ggplot(to.plot, aes(x=stage, y=rate)) +
+  geom_boxplot(outlier.shape=NA, coef=1) +
+  # geom_boxplot(aes(fill=stage), outlier.shape=NA, coef=1) +
+  # scale_fill_manual(values=colors) +
+  labs(x="", y="Methylation (%)") +
+  facet_wrap(~anno, nrow=1, scales="fixed") +
+  # coord_cartesian(ylim=c(8,93)) +
+  theme_bw() +
+  guides(color=F, fill=F) +
+  theme_pb() +
+  theme(
+    strip.background = element_rect(fill="#F37A71")
+  )
+print(p)
+
+# pdf(paste0(io$outdir,"/boxplots_met2.pdf"), useDingbats = F, onefile = F, width=14, height=6)
+# print(p)
+# dev.off()
+```

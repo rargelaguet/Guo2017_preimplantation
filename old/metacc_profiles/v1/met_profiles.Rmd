@@ -1,0 +1,167 @@
+---
+title: "Guo_2017: pseudobulked profiles of DNA methylation"
+output: 
+  BiocStyle::html_document: 
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(ggplot2)
+```
+
+```{r}
+f <- function(x) { return(data.frame(y=mean(x), ymin=mean(x)-sd(x), ymax=mean(x)+sd(x))) }
+
+theme_pub <- function() {
+  theme(
+    plot.margin = unit(c(t=1,r=1,b=1,l=1), "cm"),
+    plot.title = element_text(size=25,hjust=0.5),
+    axis.text=element_text(size=16, colour="black"),
+    axis.title.x=element_text(size=17, margin=margin(10,0,0,0)),
+    axis.title.y=element_text(size=17, margin=margin(0,10,0,0)),
+    axis.line = element_line(size=rel(1.0)),
+    axis.ticks = element_line(size=rel(1.5), color="black"),
+    legend.key = element_blank(),
+    legend.position = "top",
+    legend.direction = "horizontal",
+    # legend.key.size= unit(0.5, "cm"),
+    legend.key.width=unit(1.2,"line"),
+    legend.key.height=unit(1.0,"line"),
+    legend.margin = margin(t=10, r=0, b=0, l=0, unit="pt"),
+    legend.title = element_blank(),
+    legend.text = element_text(size=17),
+    panel.border=element_blank(),
+    panel.grid.major=element_blank(),
+    panel.grid.minor=element_blank(),
+    panel.background=element_blank()
+  )
+}
+```
+
+```{r define_options, echo=FALSE}
+
+## I/O ##
+io <- list()
+io$basedir <- "/Users/ricard/data/Guo_2017"
+io$outdir <- "/Users/ricard/Guo_2017/met/profiles/out"
+io$data.indir <- paste(io$basedir,"met/raw",sep="/")
+io$in.sample_metadata <- paste0(io$basedir,"/sample_metadata.txt")
+io$features.indir <- paste(io$basedir,"features/filt",sep="/")
+
+## Options ##
+opts <- list()
+opts$window_size <- 2000 # in bp
+opts$tile <- 50          # window size to calculate methylation rates 
+
+# Define which annotations to use and where to center the windows
+opts$annotations <- c(
+  # "prom_2000_2000"="center"
+  # "prom_2000_2000_cgi"="center",
+  "prom_2000_2000_noncgi"="center",
+  # "ESC_CTCF"="center",
+  # "ESC_p300"="center"
+)
+
+# Define which stages to look at 
+opts$stage <- c("Zygote", "2-cell", "4-cell", "8-cell", "Morula", "ICM", "TE")
+
+# Define which cells to use
+opts$cells <- fread(io$in.sample_metadata) %>% 
+  .[stage%in%opts$stage,id_met]
+```
+
+<!-- Load id_met metadata -->
+```{r}
+sample_metadata <- fread(io$in.sample_metadata, stringsAsFactors=T) %>% 
+  .[,stage:=factor(stage,levels=opts$stage)] %>%
+  .[id_met%in%opts$cells] %>% droplevels
+```
+
+<!-- Load genomic contexts and define windows -->
+```{r load_features, echo=FALSE, include=FALSE}
+anno_list <- list()
+for (anno in names(opts$annotations)) {
+  tmp <- fread(sprintf("%s/%s.bed",io$features.indir,anno), stringsAsFactors=T)[,c(1,2,3,4,5,6)]
+  colnames(tmp) <- c("chr","start","end","strand","id","anno")
+  
+  # Define central position for the window approach
+  if (opts$annotations[anno] == "start") {
+    tmp <- rbind(tmp[strand=="+",.(chr,start,strand,id,anno)] %>% .[,center:=start] %>% .[,c("start"):=NULL], 
+                 tmp[strand=="-",.(chr,end,strand,id,anno)] %>% .[,center:=end] %>% .[,c("end"):=NULL]) 
+  }
+  if (opts$annotations[anno] == "center") {
+    stopifnot(all(tmp[,end] > tmp[,start]))
+    tmp <- tmp[,.(chr,start,end,strand,id,anno)][,center:=round(end+start)/2][,c("start","end"):=NULL]
+  }
+  if (opts$annotations[anno] == "end") {
+    tmp <- rbind(tmp[strand=="+",.(chr,end,strand,id,anno)][,center:=end][,c("end"):=NULL], 
+                 tmp[strand=="-",.(chr,start,strand,id,anno)][,center:=start][,c("start"):=NULL])
+  }
+  anno_list[[anno]] <- tmp %>% .[, c("start","end") := list(center-opts$window_size,center+opts$window_size)]
+}
+
+anno_df <- rbindlist(anno_list) %>% 
+  .[,c("chr"):=list(as.factor(sub("chr","",chr)))] %>%
+  .[,id:=as.character(id)] %>%
+  setkey(chr,start,end)
+rm(anno_list)
+```
+
+<!-- Load DNA methylation data -->
+```{r load_met, echo=FALSE, include=FALSE}
+met_list <- list()
+for (cell in opts$cells) {
+  tmp <- fread(sprintf("zcat < %s/%s.tsv.gz",io$data.indir,cell), showProgress=F, stringsAsFactors=F) %>%
+    setnames(c("chr","start","end","rate")) %>% setkey("chr","start","end") %>%
+    .[,id_met:=cell] %>%
+    .[,bp:=start] %>%
+    .[,chr:=as.factor(stringr::str_replace_all(chr,"chr",""))] %>%
+    
+    foverlaps(.,anno_df, nomatch=0) %>% .[, c("chr","i.start","i.end") := NULL] %>%
+    .[,id:=as.character(id)] %>%
+    .[,dist:=ifelse(strand %in% c("+","*"),bp-center,center-bp)] %>% 
+    .[, dist:=opts$tile*round(dist/opts$tile)] %>%
+    .[,list(rate=mean(rate), N=.N),by=.(id_met,id,dist,anno)]
+  met_list[[cell]] <- tmp
+}
+
+met <- rbindlist(met_list) %>%
+  # .[,c("id_met","id"):=list(as.factor(id_met),as.factor(id))] %>%
+  merge(sample_metadata[,c("id_met","stage")], by="id_met") %>%
+  droplevels()
+
+# rm(met_list)
+``` 
+
+```{r}
+met[,rate:=rate*100]
+```
+
+<!-- Compute running window estimates -->
+```{r preproc_data, echo=FALSE, include=FALSE, warning=FALSE}
+to.plot <- met[, dist := opts$tile*round(dist/opts$tile)] %>% 
+  .[,list(mean=mean(rate)), by=c("id_met","dist","anno","stage")] %>%
+  setkey(anno)
+```
+
+<!-- Plot profiles  -->
+```{r draw_profiles, echo=FALSE, include=TRUE, warning=FALSE}
+for (n in unique(to.plot$anno)) {
+    p <- ggplot(to.plot[anno==n,], aes(x=dist, y=mean)) +
+      stat_summary(aes(group=stage, colour=stage, fill=stage), fun.data=f, geom="smooth") + 
+      xlim(-opts$window_size, opts$window_size) + ylim(0,70) +
+      xlab("") + ylab("Methylation rate") +
+      # scale_linetype_manual(values=c("CG"="solid", "GC"="solid")) +
+      # scale_colour_manual(values=c("CG"="#F8766D","GC"="#00BFC4"), labels=c("CpG methylation","GpC accessibility")) +
+      guides(fill=FALSE, linetype=FALSE) +
+      theme_pub()
+  print(p)
+    
+  # pdf(sprintf("%s/%s_%s.pdf",io$outdir,s,n))
+  # print(p)
+  # dev.off()
+}
+```

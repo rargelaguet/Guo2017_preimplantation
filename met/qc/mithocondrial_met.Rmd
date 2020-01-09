@@ -1,0 +1,82 @@
+---
+title: "Quality control of methylation data"
+output: 
+  BiocStyle::html_document: 
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, include=FALSE, echo=FALSE}
+library(data.table)
+library(purrr)
+library(ggplot2)
+library(ggpubr)
+```
+
+```{r define_opts, echo=FALSE, include=FALSE}
+if (grepl("ricard",Sys.info()['nodename'])) {
+  source("/Users/ricard/Guo_2017/settings.R")
+} else if (grepl("yoda",Sys.info()['nodename'])) {
+  source("/homes/ricard/Guo_2017/settings.R")
+} else {
+  stop("Computer not recognised")
+}
+io$outdir <- paste0(io$basedir,"/met/qc")
+
+# Define which cells to use
+opts$cells <- sample_metadata %>% .[,id_met] %>% as.character
+```
+
+<!-- Filter sample metadata -->
+```{r load_accadata}
+sample_metadata <- sample_metadata %>% .[id_met%in%opts$cells]
+```
+
+<!-- Load methylation data -->
+```{r}
+dt <- list()
+for (i in opts$cells) {
+  if (file.exists(sprintf("%s/%s.tsv.gz",io$met_data_raw,i))) {
+    dt[[i]] <- fread(
+      file = sprintf("%s/%s.tsv.gz",io$met_data_raw,i), 
+      sep="\t", verbose=F, header=F, colClasses = list(factor=1, integer=2, numeric=3)
+    ) %>% setnames(c("chr","pos","rate")) %>%
+      .[chr=="M"] %>%
+      .[,id_met:=as.factor(i)]
+  } else {
+    print(sprintf("Sample %s not found",i))
+  }
+}
+dt <- rbindlist(dt) %>% .[,chr:=as.factor(chr)]
+```
+
+<!-- Bar plots of average MT methylation rate per cell -->
+
+```{r}
+# tmp <- dt[,.(coverage=.N),by="id_met"]
+```
+
+```{r}
+# Filter cells by coverage
+dt <- dt[,coverage:=.N,by="id_met"] %>% .[coverage>100]
+```
+
+```{r}
+to.plot <- dt[,.(mean=mean(rate)), by="id_met"] %>%
+  merge(sample_metadata,by="id_met")%>% 
+  setkey(mean) %>% .[,id_met:=factor(id_met,levels=id_met)]
+
+p <- ggbarplot(to.plot, x="id_met", y="mean", size=0.25, fill="#F8766D", 
+               facet="stage", scales="free_x") +
+  labs(x="", y="MT methylation (%)") +
+  coord_cartesian(ylim=c(0,1)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+print(p)
+
+# pdf(file=paste0(io$outdir,"/qc_met.pdf"), width=8, height=5)
+# print(p)
+# dev.off()
+```

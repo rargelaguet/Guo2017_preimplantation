@@ -1,0 +1,138 @@
+---
+title: "Guo2017: general accessibility statistics of cells"
+output:
+  BiocStyle::html_document: 
+    toc: false
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(ggplot2)
+library(RColorBrewer)
+```
+
+```{r}
+theme_pub <- function() {
+  theme(
+    axis.title.y = element_text(colour="black", size=17, margin=margin(0,10,0,0)),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(colour="black",size=rel(1.5)),
+    axis.ticks = element_line(colour="black"),
+    axis.line = element_line(color="black"),
+    legend.position="top",
+    legend.title = element_blank(),
+    legend.direction = "horizontal",
+    legend.key.width=unit(1.2,"line"),
+    legend.key.height=unit(1.0,"line"),
+    legend.text = element_text(size=15),
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    panel.border = element_blank()
+  )
+}
+```
+
+```{r define_opts, echo=FALSE}
+
+## Define I/O 
+io <- list()
+io$in.metadata <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
+io$in.data <- "/Users/ricard/data/Guo_2017/acc/gpc_level"
+# io$annos_dir  <- "/Users/ricard/data/Guo_2017/features/filt"
+io$stats <- "/Users/ricard/data/Guo_2017/acc/stats/stats.txt"
+# io$outdir <- "/Users/ricard/gastrulation/acc/stats/samples/out"
+
+## Define options
+opts <- list()
+
+# Define which stages to look at 
+opts$stage <- c("Zygote", "2-cell", "4-cell", "8-cell", "Morula", "ICM", "TE")
+
+# Define genomic contexts (use NULL for no genomic context filtering)
+# opts$annos <- c(
+#   # "genebody"="Gene body",
+#   "prom_2000_2000_cgi",
+#   "prom_2000_2000_noncgi",
+#   "prom_2000_2000",
+#   "H3K27ac_distal_E7.5_union_intersect12_500",
+#   "H3K27ac_distal_E7.5_Mes_intersect12_500",
+#   "H3K27ac_distal_E7.5_Ect_intersect12_500",
+#   "H3K27ac_distal_E7.5_End_intersect12_500"
+#   # "exons"="Exons",
+#   # "introns"="Introns",
+#   # "CGI"="CpG islands",
+#   # "LINE"="LINE",
+#   # "LTR"="LTR"
+# )
+opts$annos <- NULL
+
+# Define which cells to use
+opts$cells <- fread(io$in.metadata) %>%
+  .[stage%in%opts$stage,id_acc]
+```
+
+<!-- Load sample metadata -->
+```{r}
+metadata <- fread(io$in.metadata,stringsAsFactors=T) %>% 
+  .[id_acc%in%opts$cells] %>%
+  .[,stage:=factor(stage,levels=opts$stage)]
+```
+
+<!-- Load genomic contexts metadata -->
+```{r load_genomiccontexts}
+if (!is.null(opts$annos)) {
+  anno_dt <- lapply(opts$annos, function(anno) fread(sprintf("%s/%s.bed",io$annos_dir,anno), stringsAsFactors=T)) %>%  
+    rbindlist %>% setnames(c("chr","start","end","strand","id","anno"))
+}
+```
+
+<!-- Load accessibility data and filter genomic contexts -->
+```{r load_data_and_calculate_stats, echo=FALSE}
+stats <- data.table(expand.grid(opts$cells,c(names(opts$annos),"all"))) %>% setnames(c("id_acc","anno")) %>%
+  .[,c("coverage","mean"):=as.numeric(NA)]
+
+for (cell in opts$cells) {
+  if (file.exists(sprintf("%s/%s.tsv.gz",io$in.data,cell))) {
+    # print(sprintf("Loading %s accessibility...",cell))
+
+    # Load sample accessibility data
+    data <- fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$in.data,cell), sep="\t", verbose=F, showProgress=F, stringsAsFactors=T)
+    data %>% setnames(c("chr","pos","rate"))
+
+    # Compute genome-wide statistics
+    stats[id_acc==cell & anno=="all", c("coverage","mean"):=list(nrow(data),mean(data$rate))]
+
+    # Calculate statistics per genomic context
+    # data[,c("start","end") := list(pos,pos)] %>% setkey(chr,start,end)
+    if (!is.null(opts$annos[1])) {
+      for (k in names(opts$annos)) {
+        data_k <- foverlaps(data, anno_dt[anno==k] %>% setkey(chr,start,end), nomatch=0) %>%
+          .[,c("start","end","strand","i.start","i.end"):=NULL]
+        stats[id_acc==cell & anno==k, c("nreads","coverage","mean"):=list(sum(data_k$met_reads+data_k$nonmet_reads),nrow(data_k),mean(data_k$rate))]
+      }
+    }
+
+  } else {
+    print(sprintf("Sample %s not found for accessibility",cell))
+  }
+}
+
+# stats <- stats[complete.cases(stats)]
+if (max(stats$mean) < 1) {
+  stats[, mean:=mean*100]
+} else if (min(stats$mean) > 100) {
+  stats[, mean:=mean/100]
+}
+stats[,mean:=round(mean,3)]
+fwrite(stats, file=io$stats, sep="\t", row.names=F, col.names=T)
+```
+
+
+```{r read_stats, echo=FALSE}
+stats <- fread(io$stats)
+stats <- stats %>% merge(metadata, by="id_acc")
+```

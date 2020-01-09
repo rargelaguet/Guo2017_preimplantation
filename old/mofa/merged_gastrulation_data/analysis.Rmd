@@ -1,0 +1,267 @@
+---
+title: "Gastrulation: MOFA applied to E7.5 stage"
+output: 
+  BiocStyle::html_document: 
+    fig_width: 10
+    fig_height: 8
+---
+
+
+```{r}
+library(MOFA2)
+library(data.table)
+library(purrr)
+library(ggplot2)
+library(scater)
+library(reticulate)
+library(RColorBrewer)
+library(corrplot)
+```
+
+```{r}
+source("/Users/ricard/Guo_2017/biofam/load_settings.R")
+source("/Users/ricard/Guo_2017/biofam/load_metadata.R")
+```
+
+<!-- Load pretrained model -->
+```{r}
+model <- load_model(paste0(io$outdir,"/hdf5/model_test_large.hdf5"))
+# model <- load_model(paste0(io$outdir,"/test.hdf5"))
+```
+
+```{r}
+# p <- plotTilesData(model, colors=c(
+#   rep("#00BFC4", length(grep("Acc",viewNames(model)))),
+#   rep("#F37A71", length(grep("Met",viewNames(model)))),
+#   "#3CB54E"
+#   )
+# )
+
+# pdf(paste0(io$outdir,"/pdf/DataTiles.pdf"), useDingbats = F, onefile = F, width=8, height=10)
+# p
+# dev.off()
+```
+
+<!-- Filter sample metadata -->
+```{r}
+sample_metadata_filt <- sample_metadata %>% 
+  setkey(sample) %>% .[unname(unlist(samples_names(model)))]
+```
+
+```{r}
+model2 <- detect_passengers(model)
+```
+
+<!-- Rename views -->
+```{r}
+# opts$views_names <- c(
+# 
+#   "met_H3K27ac_distal_E7.5_Ect_intersect12_500"="Ectoderm Enhancers (met)",
+#   "met_H3K27ac_distal_E7.5_Mes_intersect12_500"="Mesoderm Enhancers (met)",
+#   "met_H3K27ac_distal_E7.5_End_intersect12_500"="Endoderm Enhancers (met)",
+#   "acc_H3K27ac_distal_E7.5_Ect_intersect12"="Ectoderm Enhancers (acc)",
+#   "acc_H3K27ac_distal_E7.5_Mes_intersect12"="Mesoderm Enhancers (acc)",
+#   "acc_H3K27ac_distal_E7.5_End_intersect12"="Endoderm Enhancers (acc)",
+#   "met_prom_2000_2000"="Promoters (met)",
+#   "acc_prom_2000_2000"="Promoters (acc)",
+#   "RNA" = "RNA expression"
+# )
+
+opts$views_names <- c(
+  "met_H3K27ac_distal_E7.5_Ect_intersect12_500"="Ectoderm Enhancers (met)",
+  "met_H3K27ac_distal_E7.5_Mes_intersect12_500"="Mesoderm Enhancers (met)",
+  "met_H3K27ac_distal_E7.5_End_intersect12_500"="Endoderm Enhancers (met)",
+  "met_prom_2000_2000"="Promoters (met)",
+  "acc_H3K27ac_distal_E7.5_Ect_intersect12"="Ectoderm Enhancers (acc)",
+  "acc_H3K27ac_distal_E7.5_Mes_intersect12"="Mesoderm Enhancers (acc)",
+  "acc_H3K27ac_distal_E7.5_End_intersect12"="Endoderm Enhancers (acc)",
+  "acc_H3K27ac_distal_E7.5_Ect_intersect12"="Ectoderm Enhancers (acc)",
+  "acc_H3K27ac_distal_E7.5_Mes_intersect12"="Mesoderm Enhancers (acc)",
+  "acc_H3K27ac_distal_E7.5_End_intersect12"="Endoderm Enhancers (acc)",
+  "acc_prom_200_200"="Promoters (acc)",
+  "RNA" = "RNA expression"
+)
+
+views_names(model) <- stringr::str_replace_all(views_names(model), opts$views_names)
+```
+
+<!-- Subset factors -->
+Select Factors that are active in the RNA
+```{r}
+# r2 <- calculate_variance_explained(model)$r2_per_factor
+# factors <- sapply(r2, function(x) x[,"RNA expression"]>0.01)
+# model <- subset_factors(model, which(apply(factors,1,sum) >= 1))
+# factors_names(model) <- paste("Factor",1:get_dimensions(model)[["K"]], sep=" ")
+```
+
+<!-- Subset groups -->
+```{r}
+# model <- subset_groups(model, groups=c("Preimplantation", "E4.5", "E5.5", "E6.5", "E7.5"))
+```
+
+<!-- Calculate variance explained -->
+```{r}
+r2 <- calculate_variance_explained(model)$r2_per_factor
+
+foo <- reshape2::melt(
+  lapply(r2, function(x)
+    reshape2::melt(as.matrix(x), varnames = c("factor", "view"))
+  ), id.vars=c("factor", "view", "value")
+) %>% as.data.table %>% .[,L1:=factor(L1, levels=c("Preimplantation", "E4.5", "E5.5", "E6.5", "E7.5"))]
+
+# foo$value[foo$value>=0.10] <- 0.10
+
+p <- ggplot(foo, aes_string(x="view",y="factor")) + 
+  labs(y="", x="") +
+  geom_tile(aes_string(fill="value"), color="black") +
+  # facet_wrap(~view, nrow=1) +
+  facet_wrap(~L1, nrow=1) +
+  guides(fill=guide_colorbar("R2")) +
+  scale_fill_gradientn(colors=c("gray97","darkblue"), guide="colorbar") +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(size=11, angle=60, hjust=1, vjust=1, color="black"),
+    axis.text.y = element_text(size=12, color="black"),
+    axis.title.y = element_text(size=15),
+    axis.line = element_blank(),
+    axis.ticks =  element_blank(),
+    strip.text = element_text(size=rel(0.7)),
+    strip.background = element_blank(),
+    panel.background = element_blank()
+  )
+print(p)
+
+# pdf(sprintf("%s/r2.pdf",io$pdfdir), height=4, width=11)
+# print(p)
+# dev.off()
+```
+
+```{r}
+p <- plot_factor_beeswarm(
+  model, 
+  # factors = c(1,2,3,4,5), 
+  factors = c(7,8,9)
+  # color_by = "group"
+  # color_by = as.character(sample_metadata_filt$stage_lineage)
+)
+
+# pdf(paste0(io$outdir,"/GOenrich_nonCGIprom_nondiff.pdf"), width=10, height=4, useDingbats = F)
+print(p)
+# dev.off()
+```
+
+```{r}
+sort(unlist(get_factors(model, factors=6)))
+```
+
+```{r}
+p <- plot_factor_scatter(
+  model, 
+  factors = c(1,7), 
+  color_by = sample_metadata_filt$stage_lineage
+)
+
+# pdf(paste0(io$outdir,"/GOenrich_nonCGIprom_nondiff.pdf"), width=10, height=4, useDingbats = F)
+print(p)
+# dev.off()
+```
+
+```{r}
+view <- "RNA expression"
+# view <- "Ectoderm Enhancers (acc)"
+# view <- "Promoters (met)"
+
+p <- plot_weights(
+  model, 
+  view=view, 
+  factor=9, 
+  nfeatures=15, 
+  scale=F, abs=F
+)
+print(p)
+```
+
+```{r}
+foo <- get_factors(model, groups="E5.5", factors=1)[[1]][,1]
+tail(sort(foo))
+```
+
+```{r}
+model_i <- impute(model)
+```
+
+```{r}
+
+view <- "RNA expression"
+# view <- "Ectoderm Enhancers (met)"
+# view <- "Promoters (met)"
+
+anno_df <- sample_metadata_filt[,c("sample","stage_lineage")] %>% tibble::column_to_rownames("sample")
+
+plot_data_heatmap(
+  model,
+  view=view, 
+  groups = c("E7.5"),
+  # groups = c("Preimplantation"),
+  factor=9, 
+  features=50,
+  # annotation_col=anno_df,
+  cluster_rows = T, cluster_cols=F,
+  show_rownames = F, show_colnames=F
+)
+```
+
+```{r}
+model_i <- impute(model)
+```
+
+```{r}
+plot_data_heatmap(
+  model,
+  imputed=F,
+  view=view, 
+  # groups = c("E4.5"),
+  groups = c("Preimplantation"),
+  factor=5, 
+  features=50,
+  # annotation_col=anno_df,
+  cluster_rows = F, cluster_cols=F,
+  show_rownames = F, show_colnames=F
+  
+)
+```
+
+```{r}
+plot_factor_cor(model)
+```
+
+```{r}
+object <- detect_passengers(model)
+```
+
+
+```{r}
+Ypred <- predict(model, factors = 5)
+hist(apply(Ypred$`RNA expression`$Preimplantation,2, function(x) sum(abs(x))))
+hist(Ypred[["Promoters (met)"]][["E7.5"]])
+hist(Ypred[["Promoters (met)"]][["Preimplantation"]])
+
+hist(model@training_data[["Promoters (met)"]][["E7.5"]])
+```
+
+```{r}
+k = "Factor8"
+g = "Preimplantation"
+m = "RNA expression"
+
+samples <- samples_names(object)[[g]]
+
+
+max.view <- names(which.max(unlist(lapply(r2, function(x) x[k,][which.max(x[k,])]))))
+
+r2[which.max(foo)]
+active.vews <- names(r2[[g]][k,]>0.01))
+  
+```
+

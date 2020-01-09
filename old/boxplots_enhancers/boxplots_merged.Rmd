@@ -1,0 +1,252 @@
+---
+title: "Gastrulation:"
+output:
+  BiocStyle::html_document: 
+    toc: false
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(ggplot2)
+library(scater)
+
+matrix.please <- function(x) {
+    m<-as.matrix(x[,-1])
+    rownames(m)<-x[[1]]
+    m
+}
+
+theme_pb <- function() {
+  theme(
+    axis.text.x = element_text(size=rel(1.7), color="black", angle=50, vjust=1, hjust=1),
+    axis.text.y = element_text(size=rel(1.2), color="black"),
+    axis.title.y = element_text(size=rel(1.4), color="black"),
+    strip.background = element_rect(fill="#F37A71"),
+    strip.text = element_text(size=rel(2.4), color="black"),
+    # strip.text.x = element_text(size=rel(1.45), color="black"),
+    legend.position="top",
+    legend.title = element_blank()
+  )
+}
+```
+
+<!-- Define I/O -->
+```{r define_opts, echo=FALSE}
+io <- list()
+
+# General
+io$annos_dir <- "/Users/ricard/data/gastrulation/features/filt"
+io$gene_metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
+io$outdir <- "/Users/ricard/Guo_2017/boxplots_enhancers/out"
+
+# Argelaguet2019
+io$sample.metadata1 <- "/Users/ricard/data/gastrulation/sample_metadata_scNMT.txt"
+io$met.dir1 <- "/Users/ricard/data/gastrulation/met/parsed"
+io$acc.dir1 <- "/Users/ricard/data/gastrulation/acc/parsed"
+
+# Guo2017
+io$sample.metadata2 <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
+io$met.dir2 <- "/Users/ricard/data/Guo_2017/met/feature_level"
+io$acc.dir2 <- "/Users/ricard/data/Guo_2017/acc/feature_level"
+```
+
+<!-- Define options -->
+```{r}
+opts <- list()
+
+# Define which stage and lineages to look at 
+opts$stage_lineage1 <- c(
+  "E4.5_EPI", "E4.5_PE",
+  "E5.5_EPI", "E5.5_PE",
+  "E6.5_EPI", "E6.5_VE",
+  "E7.5_Ectoderm","E7.5_Mesoderm","E7.5_Endoderm"
+)
+
+opts$stage_lineage2 <- c(
+  # "Zygote"
+  "2-cell",
+  "4-cell",
+  "8-cell",
+  "16-cell",
+  "Morula",
+  "ICM"
+  # "ESC",
+  # "TE"
+)
+
+# Define which annotations to look at
+opts$met.annos <- c(
+  # "genebody",
+  # "prom_2000_2000",
+  # "H3K27ac_distal_E7.5_Mes_intersect12",
+  "H3K27ac_distal_E7.5_Ect_intersect12"
+  # "H3K27ac_distal_E7.5_End_intersect12"
+)
+
+opts$acc.annos <- c(
+  # "genebody",
+  # "prom_200_200",
+  # "H3K27ac_distal_E7.5_Mes_intersect12",
+  "H3K27ac_distal_E7.5_Ect_intersect12"
+  # "H3K27ac_distal_E7.5_End_intersect12"
+)
+
+# Define which cells to use
+tmp1 <- fread(io$sample.metadata1) %>% 
+  .[,stage_lineage:=paste(stage,lineage,sep="_")]
+opts$met_cells1 <- tmp1 %>% .[pass_metQC==T & outlier==F & stage_lineage%in%opts$stage_lineage1,id_met]
+opts$acc_cells1 <- tmp1 %>% .[pass_accQC==T & outlier==F & stage_lineage%in%opts$stage_lineage1,id_acc]
+
+tmp2 <- fread(io$sample.metadata2)
+opts$met_cells2 <- tmp2 %>% .[stage%in%opts$stage_lineage2,id_met]
+opts$acc_cells2 <- tmp2 %>% .[stage%in%opts$stage_lineage2,id_acc]
+```
+
+<!-- Load sample metadata -->
+```{r load_metadata}
+sample_metadata1 <- fread(io$sample.metadata1) %>%
+  .[,stage_lineage:=as.factor(paste(stage,lineage,sep="_"))] %>%
+  .[id_met%in%opts$met_cells1 | id_acc%in%opts$acc_cells1] %>%
+  droplevels()
+
+sample_metadata2 <- fread(io$sample.metadata2) %>%
+  .[,stage_lineage:=stage] %>%
+  droplevels()
+  
+sample_metadata <- rbind(
+  sample_metadata1[,c("id_acc","id_met","sample","stage_lineage")],
+  sample_metadata2[,c("id_acc","id_met","sample","stage_lineage")]
+)
+```
+
+<!-- Load methylation data -->
+```{r load_data, echo=FALSE, include=FALSE}
+met_dt1 <- lapply(opts$met.annos, function(n) {
+  fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$met.dir1,n), showProgress=F, quote="") %>% .[V1%in%opts$met_cells1]
+}) %>% rbindlist
+colnames(met_dt1) <- c("id_met","id","anno","Nmet","N","rate")
+
+met_dt2 <- lapply(opts$met.annos, function(n) {
+  fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$met.dir2,n), showProgress=F, quote="") %>% .[V1%in%opts$met_cells2]
+}) %>% rbindlist
+colnames(met_dt2) <- c("id_met","id","anno","Nmet","N","rate")
+
+met_dt <- rbind(met_dt1,met_dt2)
+```
+
+<!-- Load accessibility data -->
+```{r load_data, echo=FALSE, include=FALSE}
+acc_dt1 <- lapply(opts$acc.annos, function(n) {
+  fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$acc.dir1,n), showProgress=F, stringsAsFactors=F, quote="") %>%
+  .[V1%in%opts$acc_cells1]
+}) %>% rbindlist
+colnames(acc_dt1) <- c("id_acc","id","anno","Nmet","N","rate")
+
+acc_dt2 <- lapply(opts$acc.annos, function(n) {
+  fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$acc.dir2,n), showProgress=F, stringsAsFactors=F, quote="") %>%
+  .[V1%in%opts$acc_cells2]
+}) %>% rbindlist
+colnames(acc_dt2) <- c("id_acc","id","anno","Nmet","N","rate")
+
+acc_dt <- rbind(acc_dt1,acc_dt2)
+```
+
+<!-- Load selected enhancers (from MOFA) -->
+```{r}
+# Mesoderm-specific
+
+# Ectoderm-specific
+diff.met.ect <- fread("/Users/ricard/Guo_2017/mofa/out/Factor_Met_EctEnhancers_top100.txt") %>% 
+  .[,sign:=value>0] %>% 
+  setnames("feature","id") %>%
+  .[,id:=substr(id,1,nchar(id)-3)] %>%
+  .[,id:=stringr::str_replace_all(id,"_500","")]
+
+# Endoderm-specific
+```
+
+<!-- Load differentially accessible sites -->
+```{r}
+# Mesoderm-specific
+
+# Ectoderm-specific
+diff.acc.ect <- fread("/Users/ricard/Guo_2017/mofa/out/Factor_Acc_EctEnhancers_top100.txt") %>% 
+  .[,sign:=value>0] %>%
+  setnames("feature","id") %>%
+  .[,id:=substr(id,1,nchar(id)-3)]
+
+# Endoderm-specific
+```
+
+<!-- Merge data with metadata -->
+```{r merge}
+acc_dt <- merge(acc_dt, sample_metadata, by="id_acc") %>% droplevels()
+met_dt <- merge(met_dt, sample_metadata, by="id_met") %>% droplevels()
+```
+
+```{r}
+met_dt.sig <- met_dt %>% merge(diff.met.ect[,c("sign","id")], by="id")
+acc_dt.sig <- acc_dt %>% merge(diff.acc.ect[,c("sign","id")], by="id")
+```
+
+<!-- Boxplots with accessibility rate per genomic context and stage -->
+```{r}
+annos <-c(
+  "H3K27ac_distal_E7.5_End_intersect12"="Endoderm enhancers",
+  "H3K27ac_distal_E7.5_Mes_intersect12"="Mesoderm enhancers",
+  "H3K27ac_distal_E7.5_Ect_intersect12"="Ectoderm enhancers"
+)
+
+foo <- acc_dt.sig[anno%in%names(annos)] %>%
+  .[,.(rate=sum(Nmet)/sum(N), Nmet=sum(Nmet), N=sum(N), nsites=.N),by=c("sample","stage_lineage","anno")] %>%
+  .[,rate:=rate*100] %>%
+  .[,anno:=stringr::str_replace_all(anno,annos)] %>%
+  .[,stage_lineage:=factor(stage_lineage,levels=c(opts$stage_lineage2,opts$stage_lineage1))] %>%
+  droplevels() 
+
+p <- ggplot(foo, aes(x=stage_lineage, y=rate)) +
+  geom_boxplot(aes(fill=stage_lineage), outlier.shape=NA) +
+  # scale_fill_manual(values=opts$colors) +
+  labs(x="", y="Accessibility rate") +
+  facet_wrap(~anno, nrow=1, scales="fixed") +
+  coord_cartesian(ylim=c(0,60)) +
+  theme_bw() +
+  guides(color=F, fill=F) +
+  theme_pb() +
+  theme(strip.background = element_rect(fill="#00BFC4"))
+print(p)
+
+# pdf(paste0(io$outdir,"/boxplots_acc.pdf"), useDingbats = F, onefile = F, width=14, height=6)
+# print(p)
+# dev.off()
+```
+
+<!-- Boxplots with methylation rate per genomic context and stage -->
+```{r}
+foo <- met_dt.sig[anno%in%names(annos)] %>%
+  .[,.(rate=sum(Nmet)/sum(N), Nmet=sum(Nmet), N=sum(N), nsites=.N),by=c("sample","stage_lineage","anno")] %>%
+  .[,rate:=rate*100] %>%
+  .[,anno:=stringr::str_replace_all(anno,annos)] %>%
+  .[,stage_lineage:=factor(stage_lineage,levels=c(opts$stage_lineage2,opts$stage_lineage1))] %>%
+  droplevels() 
+
+p <- ggplot(foo, aes(x=stage_lineage, y=rate)) +
+  geom_boxplot(aes(fill=stage_lineage), outlier.shape=NA) +
+  # scale_fill_manual(values=opts$colors) +
+  labs(x="", y="Accessibility rate") +
+  facet_wrap(~anno, nrow=1, scales="fixed") +
+  coord_cartesian(ylim=c(0,100)) +
+  theme_bw() +
+  guides(color=F, fill=F) +
+  theme_pb() +
+  theme(strip.background = element_rect(fill="#F37A71"))
+print(p)
+
+# pdf(paste0(io$outdir,"/boxplots_acc.pdf"), useDingbats = F, onefile = F, width=14, height=6)
+# print(p)
+# dev.off()
+```
+

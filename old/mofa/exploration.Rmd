@@ -1,0 +1,93 @@
+
+```{r}
+# io$pdfdir2 <- paste0(io$pdfdir,"/characterisation_factors/Endoderm_factor")
+# opts$factors.width <- 4.5
+# opts$factors.height <- 4
+# 
+# factor <- 4
+```
+
+```{r}
+# plot_variance_explained(model, x="group", y="view", factor=i, legend = F)
+plot_variance_explained(model, x="view", y="factor", legend = F) +
+  theme(
+    axis.text.x = element_text(colour="black", angle=30, vjust=1, hjust=1)
+  )
+```
+
+
+```{r}
+# foo <- colMeans(model@data$`Promoter methylation`$group,na.rm=T)
+# foo <- colMeans(model@data$`Promoter accessibility`$group,na.rm=T)
+# foo <- colMeans(model@data$acc_prom_200_200$group,na.rm=T)
+foo <- colMeans(model@data$met_prom_2000_2000$group,na.rm=T)
+bar <- get_factors(model)[[1]]
+
+cor(foo,bar)
+```
+
+```{r}
+p <- plot_weights(
+  model,
+  view="met_prom_2000_2000",
+  factor = 2,
+  nfeatures = 0,
+  scale = T
+)
+
+# pdf(paste0(io$pdfdir2,"/Factor_loadings_RNA.pdf"), width=5, height=4, useDingbats = F)
+print(p)
+# dev.off()
+```
+
+
+
+<!-- Plot factor values colored by cell type assignment -->
+```{r}
+p <- plot_factor(
+  model,
+  factor = 5,
+  color_by = "stage", scale = T,
+  dot_size = 2,
+  # add_violin = T, color_violin = T,
+  dodge=T, 
+  legend = T, 
+  rasterize = F
+)
+# p <- p + scale_color_manual(values=opts$colors) + scale_fill_manual(values=opts$colors)
+# p <- p + theme(
+#   strip.text = element_text(size=rel(1.1), color="black"),
+#   strip.background = element_blank(),
+# )
+
+# pdf(paste0(io$pdfdir2,"/Factor_values_violin.pdf"), width=5, height=4, useDingbats = F)
+print(p)
+# dev.off()
+```
+
+
+<!-- Plot RNA expression values for top genes  -->
+
+```{r}
+# # genes <- names(head(sort(get_weights(model, views="RNA expression", factor=factor)[[1]][,1]), n=1))
+# genes <- names(tail(sort(get_weights(model, views="RNA expression", factor=factor)[[1]][,1]), n=10))
+# 
+# for (i in genes) {
+#   p <- plot_factor(model,
+#     factor = factor,
+#     color_by = i,
+#     legend = FALSE,
+#     dot_size = 2.5,
+#   ) + scale_colour_gradientn(colours = terrain.colors(10)) +
+#     theme(
+#       axis.text = element_blank(),
+#       axis.title = element_blank(),
+#       axis.ticks.x = element_blank(),
+#       strip.text = element_blank()
+#     )
+#   
+#   pdf(sprintf("%s/Factor_rna_%s.pdf",io$pdfdir2,i), width=opts$width/1.5, height=opts$height/2, useDingbats = F)
+#   print(p)
+#   dev.off()
+# }
+```

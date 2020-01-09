@@ -1,0 +1,163 @@
+---
+title: "Quality control of methylation data"
+output: 
+  BiocStyle::html_document: 
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, include=FALSE, echo=FALSE}
+library(data.table)
+library(purrr)
+library(tidyr)
+library(ggplot2)
+library(cowplot)
+```
+
+
+```{r funcs, echo=FALSE}
+barplot_theme <- function() {
+  p <- theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(colour="black", size=15),
+    axis.text.y = element_text(colour="black",size=rel(1.2)),
+    axis.line = element_line(colour="black", size=rel(0.7)),
+    axis.ticks = element_line(colour="black", size=rel(0.7)),
+    legend.position="none",
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    panel.border = element_blank()
+  )
+}
+```
+
+```{r define_opts, echo=FALSE, include=FALSE}
+if (grepl("ricard",Sys.info()['nodename'])) {
+  source("/Users/ricard/Guo_2017/settings.R")
+} else if (grepl("yoda",Sys.info()['nodename'])) {
+  source("/homes/ricard/Guo_2017/settings.R")
+} else {
+  stop("Computer not recognised")
+}
+io$outdir <- paste0(io$basedir,"/met/qc")
+
+opts$labs <- c("nichols")
+
+# Define which cells to use
+opts$cells <- sample_metadata %>% .[,id_met]
+
+# Filtering optionsopts$cell
+opts$met_coverage_threshold <- 1e5
+opts$max.meth.rate <- 50
+opts$min.meth.rate <- 10
+```
+
+<!-- Filter sample metadata -->
+```{r load_metadata}
+sample_metadata <- sample_metadata %>% .[id_met%in%opts$cells]
+```
+
+<!-- Load methylation statistics -->
+```{r}
+stats <- fread(io$met.stats) %>% merge(sample_metadata,by="id_met")
+```
+
+```{r}
+table(sample_metadata$stage)
+```
+
+<!-- Plot QC statistics -->
+
+Barplots with coverage per cell
+```{r}
+tmp <- stats[,c("id_met","coverage")] %>% setkey(coverage) %>% .[,id_met:=factor(id_met,levels=id_met)]
+
+p <- ggplot(tmp, aes(x=id_met, y=log10(coverage))) +
+  geom_bar(stat="identity", position="dodge", fill="#F8766D", color="#F8766D") +
+  labs(title="", x="", y="Number of observed CpG sites (log10)") +
+  geom_hline(yintercept=log10(opts$met_coverage_threshold), colour="black", linetype="dashed") +
+  barplot_theme() +
+  # scale_y_continuous(expand=c(0,0), limits=c(0,4e+6)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+print(p)
+
+# pdf(file=paste0(io$outdir,"/qc_met.pdf"), width=8, height=5)
+# print(p1)
+# dev.off()
+```
+
+Barplots with global levels per cell
+```{r}
+tmp <- stats[,c("id_met","mean")] %>% setkey(mean) %>% .[,id_met:=factor(id_met,levels=id_met)]
+
+p <- ggplot(tmp, aes(x=id_met, y=mean)) +
+  geom_bar(stat="identity", position="dodge", fill="#F8766D", color="#F8766D") +
+  labs(title="", x="", y="Global methylation (%)") +
+  geom_hline(yintercept=opts$max.meth.rate, colour="black", linetype="dashed") +
+  geom_hline(yintercept=opts$min.meth.rate, colour="black", linetype="dashed") +
+  barplot_theme() +
+  # scale_y_continuous(expand=c(0,0), limits=c(0,4e+6)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+print(p)
+
+# pdf(file=paste0(io$outdir,"/qc_met.pdf"), width=8, height=5)
+# print(p1)
+# dev.off()
+```
+
+
+
+```{r}
+print("Fail QC for methylation:")
+failqc <- stats %>%
+  # .[((mean<opts$min.meth.rate) | (mean>opts$max.meth.rate))] %>%
+  .[(coverage<opts$met_coverage_threshold) | (mean<opts$min.meth.rate | mean>opts$max.meth.rate)] %>%
+  .[,id_met]
+
+print(length(failqc))
+```
+
+```{r}
+to.plot <- stats %>%
+  .[,pass_metQC2:=ifelse(id_met%in%failqc,F,T)]
+
+# p <- ggplot(to.plot, aes(x=log10(coverage), y=mean, color=pass_metQC2)) +
+p <- ggplot(to.plot, aes(x=log10(coverage), y=mean, color=lineage)) +
+  geom_point() +
+  labs(x="Number of observed CpG sites", y="Mean methylation (%)") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic()
+print(p)
+
+# pdf(file=paste0(io$outdir,"/qc_met.pdf"), width=8, height=5)
+# print(p1)
+# dev.off()
+```
+
+
+
+<!-- Update sample metadata -->
+```{r}
+# sample_metadata_updated <- fread(io$metadata)
+# sample_metadata_updated <- sample_metadata_updated %>%
+#   .[id_met%in%stats$id_met, pass_metQC:=ifelse(id_met%in%failqc,F,T)]
+# 
+# table(sample_metadata_updated$pass_metQC)
+# 
+# fwrite(sample_metadata_updated, io$metadata, sep="\t", col.names=T, row.names=F, quote=F, na="NA")
+```
+
+```{r}
+# foo <- merge(
+#   sample_metadata_updated[,c("id_met","pass_metQC")],
+#   sample_metadata[,c("id_met","pass_metQC")], 
+#   by=c("id_met")
+# )
+```
+

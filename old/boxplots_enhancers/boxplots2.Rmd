@@ -1,0 +1,221 @@
+---
+title: "Gastrulation:"
+output:
+  BiocStyle::html_document: 
+    toc: false
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(ggplot2)
+library(scater)
+
+matrix.please <- function(x) {
+    m<-as.matrix(x[,-1])
+    rownames(m)<-x[[1]]
+    m
+}
+
+theme_pb <- function() {
+  theme(
+    axis.text.x = element_text(size=rel(1.7), color="black", angle=50, vjust=1, hjust=1),
+    axis.text.y = element_text(size=rel(1.2), color="black"),
+    axis.title.y = element_text(size=rel(1.4), color="black"),
+    strip.background = element_rect(fill="#F37A71"),
+    strip.text = element_text(size=rel(2.4), color="black"),
+    # strip.text.x = element_text(size=rel(1.45), color="black"),
+    legend.position="top",
+    legend.title = element_blank()
+  )
+}
+```
+
+<!-- Define I/O and options -->
+```{r define_opts, echo=FALSE}
+
+## Define I/O ##
+io <- list()
+io$sample.metadata <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
+io$met.dir <- "/Users/ricard/data/Guo_2017/met/feature_level"
+io$acc.dir <- "/Users/ricard/data/Guo_2017/acc/feature_level"
+io$outdir <- "/Users/ricard/Guo_2017/boxplots_enhancers/out"
+io$annos_dir <- "/Users/ricard/data/gastrulation/features/filt"
+io$gene_metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
+
+## Define options ##
+opts <- list()
+
+# Define which stage and lineages to look at 
+opts$stage <- c(
+  # "Zygote"
+  "2-cell",
+  "4-cell",
+  "8-cell",
+  "16-cell",
+  "Morula",
+  "ICM"
+  # "ESC",
+  # "TE"
+)
+
+opts$met.annos <- c(
+  # "genebody",
+  # "prom_2000_2000",
+  # "H3K27ac_distal_E7.5_Mes_intersect12",
+  "H3K27ac_distal_E7.5_Ect_intersect12"
+  # "H3K27ac_distal_E7.5_End_intersect12"
+)
+
+opts$acc.annos <- c(
+  # "genebody",
+  # "prom_200_200",
+  # "H3K27ac_distal_E7.5_Mes_intersect12",
+  "H3K27ac_distal_E7.5_Ect_intersect12"
+  # "H3K27ac_distal_E7.5_End_intersect12"
+)
+
+# min.fdr <- 0.1
+# min.diff <- 0.10
+
+# opts$colors <- c(
+#   "E4.5 Epi"="gray80", 
+#   "E5.5 Epi"="gray60", 
+#   "E6.5 Epi"="grey40", "E6.5 PS"="sandybrown", 
+#   "E7.5 Ect"="steelblue", "E7.5 End"="#43CD80", "E7.5 Mes"="violetred"
+# )
+
+# Define which cells to use
+tmp <- fread(io$sample.metadata)
+opts$met_cells <- tmp %>% .[stage%in%opts$stage,id_met]
+opts$acc_cells <- tmp %>% .[stage%in%opts$stage,id_acc]
+```
+
+<!-- Load sample metadata -->
+```{r load_metadata}
+sample_metadata <- fread(io$sample.metadata,stringsAsFactors=T) %>%
+  droplevels()
+```
+
+<!-- Load methylation data -->
+```{r load_data, echo=FALSE, include=FALSE}
+met_dt <- lapply(opts$met.annos, function(n) {
+  data <- fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$met.dir,n), showProgress=F, stringsAsFactors=F, quote="") %>%
+  .[V1%in%opts$met_cells]
+}) %>% rbindlist
+colnames(met_dt) <- c("id_met","id","anno","Nmet","N","rate")
+```
+
+<!-- Load accessibility data -->
+```{r load_data, echo=FALSE, include=FALSE}
+acc_dt <- lapply(opts$acc.annos, function(n) {
+  data <- fread(cmd=sprintf("zcat < %s/%s.tsv.gz",io$acc.dir,n), showProgress=F, stringsAsFactors=F, quote="") %>%
+  .[V1%in%opts$acc_cells]
+}) %>% rbindlist
+colnames(acc_dt) <- c("id_acc","id","anno","Nmet","N","rate")
+```
+
+<!-- Load selected enhancers (from MOFA) -->
+```{r}
+# Mesoderm-specific
+
+# Ectoderm-specific
+diff.met.ect <- fread("/Users/ricard/Guo_2017/mofa/out/Factor3_Met_EctEnhancers_top100txt") %>% 
+  .[,sign:=value>0] %>% 
+  setnames("feature","id") %>%
+  .[,id:=substr(id,1,nchar(id)-3)] %>%
+  .[,id:=stringr::str_replace_all(id,"_500","")]
+
+# Endoderm-specific
+```
+
+<!-- Load differentially accessible sites -->
+```{r}
+# Mesoderm-specific
+
+# Ectoderm-specific
+diff.acc.ect <- fread("/Users/ricard/Guo_2017/mofa/out/Factor3_Acc_EctEnhancers_top100txt") %>% 
+  .[,sign:=value>0] %>%
+  setnames("feature","id") %>%
+  .[,id:=substr(id,1,nchar(id)-3)]
+
+# Endoderm-specific
+```
+
+<!-- Merge data with metadata -->
+```{r merge}
+acc_dt <- merge(acc_dt, sample_metadata[,c("sample","id_acc","stage")], by="id_acc") %>% droplevels()
+met_dt <- merge(met_dt, sample_metadata[,c("sample","id_met","stage")], by="id_met") %>% droplevels()
+```
+
+```{r}
+met_dt.sig <- met_dt %>% merge(diff.met.ect[,c("sign","id")], by="id")
+acc_dt.sig <- acc_dt %>% merge(diff.acc.ect[,c("sign","id")], by="id")
+```
+
+<!-- Boxplots with accessibility rate per genomic context and stage -->
+```{r}
+annos <-c(
+  "H3K27ac_distal_E7.5_End_intersect12"="Endoderm enhancers",
+  "H3K27ac_distal_E7.5_Mes_intersect12"="Mesoderm enhancers",
+  "H3K27ac_distal_E7.5_Ect_intersect12"="Ectoderm enhancers"
+)
+
+foo <- acc_dt.sig[anno%in%names(annos)] %>%
+  .[,.(rate=sum(Nmet)/sum(N), Nmet=sum(Nmet), N=sum(N), nsites=.N),by=c("sample","stage","anno","sign")] %>%
+  .[,rate:=rate*100] %>%
+  .[,anno:=stringr::str_replace_all(anno,annos)] %>%
+  .[,stage:=factor(stage,levels=opts$stage)] %>%
+  droplevels() 
+
+p <- ggplot(foo, aes(x=stage, y=rate)) +
+  geom_boxplot(aes(fill=stage), outlier.shape=NA) +
+  # scale_fill_manual(values=opts$colors) +
+  labs(x="", y="Accessibility rate") +
+  facet_wrap(~sign+anno, nrow=2, scales="fixed") +
+  coord_cartesian(ylim=c(0,60)) +
+  theme_bw() +
+  guides(color=F, fill=F) +
+  theme_pb() +
+  theme(strip.background = element_rect(fill="#00BFC4"))
+print(p)
+
+# pdf(paste0(io$outdir,"/boxplots_acc.pdf"), useDingbats = F, onefile = F, width=14, height=6)
+# print(p)
+# dev.off()
+```
+
+<!-- Boxplots with methylation rate per genomic context and stage -->
+```{r}
+annos <-c(
+  "H3K27ac_distal_E7.5_Ect_intersect12"="Ectoderm enhancers",
+  "H3K27ac_distal_E7.5_End_intersect12"="Endoderm enhancers",
+  "H3K27ac_distal_E7.5_Mes_intersect12"="Mesoderm enhancers"
+)
+
+foo <- met_dt.sig[anno%in%names(annos)] %>%
+  .[,.(rate=sum(Nmet)/sum(N), Nmet=sum(Nmet), N=sum(N), nsites=.N),by=c("sample","stage","anno","sign")] %>%
+  .[,rate:=rate*100] %>%
+  .[,anno:=stringr::str_replace_all(anno,annos)] %>%
+  .[,stage:=factor(stage,levels=opts$stage)] %>%
+  droplevels()  
+
+p <- ggplot(foo, aes(x=stage, y=rate)) +
+  geom_boxplot(aes(fill=stage), outlier.shape=NA) +
+  # scale_fill_manual(values=opts$colors) +
+  labs(x="", y="Methylation rate") +
+  facet_wrap(~sign+anno, nrow=2, scales="fixed") +
+  coord_cartesian(ylim=c(0,100)) +
+  theme_bw() +
+  guides(color=F, fill=F) +
+  theme_pb() +
+  theme(strip.background = element_rect(fill="#F37A71"))
+print(p)
+
+# pdf(paste0(io$outdir,"/boxplots_met.pdf"), useDingbats = F, onefile = F, width=14, height=6)
+# print(p)
+# dev.off()
+```
+

@@ -1,0 +1,195 @@
+---
+title: "Gastrulation: general methylation statistics of cells"
+output:
+  BiocStyle::html_document: 
+    toc: false
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(ggplot2)
+library(RColorBrewer)
+library(ggpubr)
+```
+
+```{r}
+theme_pub <- function() {
+  theme(
+    axis.title.y = element_text(colour="black", size=rel(1.3)),
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(colour="black",size=rel(1.2), angle=45, hjust=1, vjust=1),
+    # axis.text.x = element_blank(),
+    axis.text.y = element_text(colour="black",size=rel(1.3)),
+    axis.ticks = element_line(colour="black"),
+    legend.position = "top",
+    legend.title = element_blank(),
+    legend.direction = "horizontal",
+    legend.key.width = unit(1.2,"line"),
+    legend.key.height = unit(1.0,"line"),
+    legend.text = element_text(size=15),
+    # strip.background = element_blank(),
+    strip.text = element_text(color="black", size=rel(1.2))
+  )
+}
+```
+
+<!-- Define settings -->
+```{r define_opts, echo=FALSE}
+
+################
+## Define I/O ##
+################
+
+if (grepl("ricard",Sys.info()['nodename'])) {
+  source("/Users/ricard/Guo_2017/settings.R")
+} else {
+  stop("Computer not recognised")
+}
+io$outdir <- paste0(io$basedir,"/met/stats")
+
+####################
+## Define options ##
+####################
+
+opts <- list()
+
+# Define which cells to use (use NULL for all cells)
+opts$stages <- NULL
+
+# Define genomic contexts (use NULL for no genomic context filtering)
+# opts$annos <- c(
+#   # "genebody"="Gene body",
+#   "prom_2000_2000_cgi",
+#   "prom_2000_2000_noncgi",
+#   "prom_2000_2000",
+#   "H3K27ac_distal_E7.5_union_intersect12_500",
+#   "H3K27ac_distal_E7.5_Mes_intersect12_500",
+#   "H3K27ac_distal_E7.5_Ect_intersect12_500",
+#   "H3K27ac_distal_E7.5_End_intersect12_500"
+#   # "exons"="Exons",
+#   # "introns"="Introns",
+#   # "CGI"="CpG islands",
+#   # "LINE"="LINE",
+#   # "LTR"="LTR"
+# )
+opts$annos <- NULL
+
+# Define which cells to use
+if (is.null(opts$stages)) {
+  opts$cells <- sample_metadata[,id_met]
+} else {
+  opts$cells <- sample_metadata %>% .[stage%in%opts$stages,id_met]
+}
+
+# Update sample metadata
+sample_metadata <- sample_metadata[id_met%in%opts$cells]
+```
+
+<!-- Load genomic contexts metadata -->
+```{r load_genomiccontexts}
+if (!is.null(opts$annos)) {
+  anno_dt <- lapply(opts$annos, function(anno) 
+    fread(sprintf("%s/%s.bed",io$features.dir,anno))
+  ) %>% rbindlist %>% setnames(c("chr","start","end","strand","id","anno"))
+}
+```
+
+<!-- Load methylation data and filter genomic contexts -->
+```{r load_data_and_calculate_stats, echo=FALSE}
+# stats <- data.table(expand.grid(opts$cells,c(names(opts$annos),"all"))) %>% setnames(c("id_met","anno")) %>%
+#   .[,c("coverage","mean"):=as.numeric(NA)]
+# 
+# for (i in opts$cells) {
+#   if (file.exists(sprintf("%s/%s.tsv.gz",io$met_data_raw,i))) {
+#     # print(sprintf("Loading %s methylation...",i))
+# 
+#     # Load sample methylation data
+#     data <- fread(sprintf("%s/%s.tsv.gz",io$met_data_raw,i)) %>% 
+#       setnames(c("chr","pos","rate"))
+# 
+#     # Compute genome-wide statistics
+#     stats[id_met==i & anno=="all", c("coverage","mean"):=list(nrow(data),mean(data$rate)*100)]
+# 
+#     # Calculate statistics per genomic context
+#     data[,c("start","end") := list(pos,pos)] %>% setkey(chr,start,end)
+#     if (!is.null(opts$annos[1])) {
+#       for (k in names(opts$annos)) {
+#         data_k <- foverlaps(data, anno_dt[anno==k] %>% setkey(chr,start,end), nomatch=0) %>%
+#           .[,c("start","end","strand","i.start","i.end"):=NULL]
+#         stats[id_met==i & anno==k,
+#               c("coverage","mean"):=list(nrow(data_k),mean(data_k$rate)*100)]
+#       }
+#     }
+# 
+#   } else {
+#     print(sprintf("Sample %s not found for methylation",i))
+#   }
+# }
+# 
+# stats <- stats[complete.cases(stats)]
+# fwrite(stats, file=paste0(io$outdir,"/sample_stats.txt"), sep="\t", row.names=F, col.names=T)
+```
+
+```{r read_stats, echo=FALSE}
+stats <- fread(paste0(io$outdir,"/sample_stats.txt"))
+```
+
+```{r}
+stats <- stats %>% merge(sample_metadata, by="id_met")
+```
+
+<!-- Regress out effect of library size -->
+```{r}
+# stats[,mean_regressed := lm(formula=mean~log(coverage))[["coefficients"]][1] + lm(formula=mean~log(coverage))[["residuals"]], by=c("stage_lineage")]
+
+# stats[,mean_regressed := mean(mean) + lm(formula=mean~log(coverage))[["residuals"]], by=c("stage")]
+```
+
+<!-- Boxplots with mean methylation rate per stage -->
+```{r}
+to.plot <- stats
+
+p <- ggplot(to.plot, aes(x=stage, y=mean)) +
+  geom_boxplot(alpha=1.0, fill="#F8766D", outlier.shape = NA) +
+  geom_jitter(alpha=0.5, color="#F8766D", size=0.80) +
+  coord_cartesian(ylim=c(0,75)) +
+  ylab("Global methylation (%)") +
+  theme_bw() +
+  theme_pub()
+print(p)
+
+# pdf(paste0(io$outdir,"/globalmet_stages.pdf"), width=9, height=5, useDingbats = F)
+# print(p)
+# dev.off()
+```
+
+
+<!-- Boxplots with covearge per stage -->
+```{r}
+p <- ggplot(to.plot, aes(x=stage, y=log10(coverage))) +
+  geom_boxplot(alpha=1.0, fill="#F8766D", outlier.shape = NA) +
+  geom_jitter(alpha=0.5, color="#F8766D", size=0.80) +
+  coord_cartesian(ylim=c(5.5,7.5)) +
+  ylab("Number of observed CpG sites") +
+  theme_bw() +
+  theme_pub()
+
+print(p)
+```
+
+<!-- Correlation between mean accesibility rate and coverage -->
+
+```{r}
+# to.plot[,mean2:=log2(((mean/100)+0.01)/(1-(mean/100)+0.01))]
+
+p <- ggplot(to.plot, aes(x=mean, y=log10(coverage))) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  theme_classic()
+  # theme_pub()
+
+print(p)
+```

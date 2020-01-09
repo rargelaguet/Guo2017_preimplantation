@@ -1,0 +1,94 @@
+---
+title: "Sex determination based on chromatin accessibility coverage in the chromosome Y"
+output:
+  BiocStyle::html_document: 
+    toc: false
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(ggplot2)
+library(ggpubr)
+```
+
+<!-- Define settings -->
+```{r define_opts, echo=FALSE}
+if (grepl("ricard",Sys.info()['nodename'])) {
+  source("/Users/ricard/Guo_2017/settings.R")
+} else if (grepl("yoda",Sys.info()['nodename'])) {
+  source("/homes/ricard/Guo_2017/settings.R")
+} else {
+  stop("Computer not recognised")
+}
+io$outdir <- paste0(io$basedir,"/acc/stats")
+io$pdfdir <- paste0(io$basedir,"/acc/results/sex")
+
+# Define which chromosomes to look at
+opts$chr <- c("X","Y","1")
+
+# Define which cells to use
+opts$cells <- sample_metadata %>% .[,id_acc]
+```
+
+<!-- Load accessibility data and subset chromosomes -->
+```{r load_data_and_calculate_stats, echo=FALSE}
+stats <- data.table(expand.grid(opts$cells,opts$chr)) %>% setnames(c("id_acc","chr")) %>%
+  .[,c("coverage","mean"):=as.numeric(NA)]
+
+for (i in opts$cells) {
+  if (file.exists(sprintf("%s/%s.tsv.gz",io$acc_data_raw,i))) {
+
+    # Load sample accessibility data
+    data <- fread(
+      file = sprintf("%s/%s.tsv.gz",io$acc_data_raw,i),
+      sep="\t", verbose=F, header=F, colClasses = list(factor=1, integer=2, numeric=3)
+    ) %>% setnames(c("chr","pos","rate")) %>%
+      .[chr%in%opts$chr]
+
+    # Compute chromosome-wide statistics
+    for (j in opts$chr) {
+      stats[id_acc==i & chr==j, c("coverage","mean"):=list(nrow(data[chr==j]),mean(data[chr==j]$rate)*100)]
+    }
+
+  } else {
+    print(sprintf("Sample %s not found for accessibility",i))
+  }
+}
+
+fwrite(stats, file=paste0(io$outdir,"/sample_stats_per_chr.txt"), sep="\t", row.names=F, col.names=T)
+```
+
+```{r}
+stats <- fread(paste0(io$outdir,"/sample_stats_per_chr.txt"))
+# stats <- stats[complete.cases(stats)]
+```
+
+<!-- Plot ratio of coverage between Y chr and X chr -->
+```{r}
+to.plot <- stats %>% 
+  dcast(id_acc~chr, value.var="coverage") %>%
+  merge(sample_metadata, by="id_acc") %>%
+  .[,.(ratio=sum(Y)/sum(X)), by=c("embryo","stage")]
+
+to.plot <- to.plot[!is.na(embryo)]
+
+p <- ggbarplot(to.plot, x="embryo", y="ratio", fill="gray70", sort.val="desc") +
+  # facet_grid(~stage, scales="free_x", space = "free_x") +
+  labs(x="Embryo", y="Y/X coverage") +
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )
+
+# pdf(paste0(io$pdfdir,"/sex_determination_acc.pdf"), width=9, height=5, useDingbats = F)
+print(p)
+# dev.off()
+```
+
+<!-- Save results -->
+```{r}
+# fwrite(to.plot, paste0(io$outdir,"/sex_assignment_by_acc.txt.gz"))
+```
