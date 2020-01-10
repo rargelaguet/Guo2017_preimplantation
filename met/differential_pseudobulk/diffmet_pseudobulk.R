@@ -19,7 +19,7 @@ args <- p$parse_args(commandArgs(TRUE))
 if (grepl("ricard",Sys.info()['nodename'])) {
   source("/Users/ricard/Guo_2017/settings.R")
   source("/Users/ricard/Guo_2017/met/differential_pseudobulk/utils.R")
-} else if(grepl("ebi",Sys.info()['nodename'])){
+} else if(grepl("yoda",Sys.info()['nodename'])){
   source("/homes/ricard/Guo_2017/settings.R")
   source("/homes/ricard/Guo_2017/met/differential_pseudobulk/utils.R")
 } else {

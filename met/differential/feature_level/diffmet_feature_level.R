@@ -20,7 +20,7 @@ args <- p$parse_args(commandArgs(TRUE))
 if (grepl("ricard",Sys.info()['nodename'])) {
   source("/Users/ricard/Guo_2017/settings.R")
   source("/Users/ricard/Guo_2017/met/differential/utils.R")
-} else if(grepl("ebi",Sys.info()['nodename'])){
+} else if(grepl("yoda",Sys.info()['nodename'])){
   source("/homes/ricard/Guo_2017/settings.R")
   source("/homes/ricard/Guo_2017/met/differential/utils.R")
 } else {
@@ -108,8 +108,6 @@ data[,stage:=NULL]
 # Convert beta value to M value
 if (opts$statistical.test == "t.test")
   data[,m:=log2(((rate/100)+0.01)/(1-(rate/100)+0.01))]
-
-print(object.size(data), units='auto')
 
 #############################
 ## Filter methylation data ##

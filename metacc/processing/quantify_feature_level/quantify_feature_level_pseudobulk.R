@@ -31,7 +31,7 @@ stopifnot(args$context %in% c("CG","GC"))
 
 if (grepl("ricard",Sys.info()['nodename'])) {
   source("/Users/ricard/Guo_2017/settings.R")
-} else if (grepl("ebi",Sys.info()['nodename'])) {
+} else if (grepl("yoda",Sys.info()['nodename'])) {
   source("/homes/ricard/Guo_2017/settings.R")
 } else {
   stop("Computer not recognised")

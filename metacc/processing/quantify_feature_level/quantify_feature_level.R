@@ -31,7 +31,7 @@ stopifnot(args$context %in% c("CG","GC"))
 
 if (grepl("ricard",Sys.info()['nodename'])) {
   source("/Users/ricard/Guo_2017/settings.R")
-} else if (grepl("ebi",Sys.info()['nodename'])) {
+} else if (grepl("yoda",Sys.info()['nodename'])) {
   source("/homes/ricard/Guo_2017/settings.R")
 } else {
   stop("Computer not recognised")
@@ -60,9 +60,21 @@ opts$annos <- c(
   # "prom_200_200_cgi",
   # "prom_200_200_noncgi",
   # "LINE",
-  # "LTR"
+  # "LTR",
+  # "ESC_CTCF",
+  # "ESC_DHS",
+  # "ESC_p300",
+  # "H3K27ac_distal_E7.5_Ect_intersect12",
+  # "H3K27ac_distal_E7.5_End_intersect12",
+  # "H3K27ac_distal_E7.5_Mes_intersect12"
+  # "window2000_step250",
   # "window2000_step1000"
 )
+
+
+
+
+
 
 if (opts$annos == "all")
   opts$annos <- sapply(str_split(list.files(io$features.dir, pattern = "\\.bed.gz$"),"\\.bed.gz"),"[[", 1)
@@ -125,13 +137,13 @@ for (i in 1:length(samples_keep)) {
       dat_sample <- fread(sprintf("%s/%s.tsv.gz",io$in.folder,sample), sep="\t", verbose=F, showProgress=F) 
       if (nrow(dat_sample)>1) {
         dat_sample <- dat_sample %>%
-          .[,c("chr","pos","rate")] %>%
+          setnames(c("chr","pos","rate")) %>%
           .[,rate:=rate*100] %>%
           .[,c("start","end") := list(pos,pos)] %>%
           .[,c("chr","pos"):=list(as.factor(chr),NULL)] %>% 
           setkey(chr,start,end)
 
-        stopifnot(all(dat_sample$rate %in% c(0,100)))
+        # stopifnot(all(dat_sample$rate %in% c(0,100)))
         
         # Overlap data with annotations
         for (anno in opts$annos) {
@@ -146,7 +158,7 @@ for (i in 1:length(samples_keep)) {
             ov <- foverlaps(dat_sample, anno_list[[anno]], nomatch=0) %>% 
               .[,"i.end":=NULL] %>% setnames("i.start","pos") %>%
               .[,c("sample","anno") := list(sample,anno)] %>%
-              .[,.(rate=round(mean(rate)*100), Nmet=sum(rate>0.5), N=.N), keyby=.(sample,id,anno)] %>%
+              .[,.(rate=round(mean(rate)), Nmet=sum(rate>50), N=.N), keyby=.(sample,id,anno)] %>%
               .[,c("sample","id","anno","Nmet","N","rate")]
             
 

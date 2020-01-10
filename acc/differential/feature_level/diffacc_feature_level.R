@@ -20,7 +20,7 @@ args <- p$parse_args(commandArgs(TRUE))
 if (grepl("ricard",Sys.info()['nodename'])) {
   source("/Users/ricard/Guo_2017/settings.R")
   source("/Users/ricard/Guo_2017/acc/differential/utils.R")
-} else if(grepl("ebi",Sys.info()['nodename'])){
+} else if(grepl("yoda",Sys.info()['nodename'])){
   source("/homes/ricard/Guo_2017/settings.R")
   source("/homes/ricard/Guo_2017/acc/differential/utils.R")
 } else {
@@ -55,10 +55,10 @@ opts$min.diff <- 25
 opts$threshold_fdr <- 0.10
 
 ## START TESTING ##
-opts$anno <- "prom_200_200"
-opts$groupA <- c("ICM")
-opts$groupB <- c("Morula")
-opts$min.cells <- 5
+# opts$anno <- "prom_200_200"
+# opts$groupA <- c("ICM")
+# opts$groupB <- c("Morula")
+# opts$min.cells <- 5
 ## END TESTING ##
 
 # Update sample metadata
@@ -88,8 +88,6 @@ data <- fread(
 #     showProgress = FALSE, header = FALSE,
 #     select = c("V1"="factor", "V2"= "character", "V4"="integer", "V5"="integer", "V6"="integer"))
 # }) %>% rbindlist %>% setnames(c("id_acc","id","Nmet","N","rate"))
-
-print(object.size(data), units='auto')
 
 ############################
 ## Parse accessibility data ##

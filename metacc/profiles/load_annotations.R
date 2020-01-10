@@ -2,8 +2,10 @@
 # Load genomic annotations
 anno_list <- list()
 for (anno in names(opts$annos)) {
-  tmp <- fread(sprintf("%s/%s.bed.gz",io$features.dir,anno))[,c(1,2,3,4,5,6)]
-  colnames(tmp) <- c("chr","start","end","strand","id","anno")
+  tmp <- fread(
+    file = sprintf("%s/%s.bed.gz",io$features.dir,anno),
+    colClasses = c("V1"="factor", "V2"="integer", "V3"="integer", "V4"="factor", "V5"="factor", "V6"="factor")
+  ) %>% setnames(c("chr","start","end","strand","id","anno"))
   
   # Define central position for the window approach
   if (opts$positions[anno] == "start") {
@@ -22,7 +24,11 @@ for (anno in names(opts$annos)) {
 }
 
 anno_df <- rbindlist(anno_list) %>% 
-  .[,chr:=sub("chr","",chr)] %>%
-  setkey(chr,start,end)
+  .[,chr:=as.factor(sub("chr","",chr))]
+
+integer.cols <- c("start","end","center")
+anno_df %>%  .[,(integer.cols):=lapply(.SD, as.integer),.SDcols=(integer.cols)]
+  
+anno_df %>% setkey(chr,start,end)
 
 rm(anno_list)

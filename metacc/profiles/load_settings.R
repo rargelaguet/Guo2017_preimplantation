@@ -21,13 +21,14 @@ opts$positions <- c(
 )
 
 opts$window_size <- 2000
-opts$met.tile <- 200
-opts$acc.tile <- 100
+opts$met.tile <- 100
+opts$acc.tile <- 50
 
 # Define which cells to  use
 sample_metadata <- sample_metadata %>% 
+  .[,c("sample","id_acc","id_met","stage")] %>%
   .[stage%in%opts$stages]
 
-opts$met.cells <- sample_metadata[,id_met]
-opts$acc.cells <- sample_metadata[,id_acc]
+opts$met.cells <- sample_metadata[,id_met] %>% as.character
+opts$acc.cells <- sample_metadata[,id_acc] %>% as.character
 

@@ -58,11 +58,12 @@ samples_metadata(model) <- sample_metadata_filt
 # factors(model) <- paste("Factor",1:get_dimensions(model)[["K"]], sep=" ")
 
 plot_variance_explained(model)
-plot_factor(model, factors = 2, color_by = "stage")
+plot_factor(model, factors = 1:2, color_by = "stage", add_violin = T, dodge=T)
 plot_factors(model, factors = 1:5, color_by = "stage")
-plot_factors(model, factors = c(1,2), color_by = met)
+plot_factors(model, factors = c(1,2), color_by = "stage")
 plot_weights(model, view=1, factor = 1, nfeatures = 0, scale = F)
 
+cor(model@samples_metadata$mean, model@expectations$Z$group)
 # plot_data_scatter(model, factor=1, view=1, color_by = "lab", features = 8, dot_size = 2)
 
 

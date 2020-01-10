@@ -9,6 +9,9 @@ library(purrr)
 if (grepl("ricard",Sys.info()['nodename'])) {
   source("/Users/ricard/Guo_2017/met/dimensionality_reduction/load_settings.R")
   reticulate::use_python("/Users/ricard/anaconda3/envs/base_new/bin/python", required=TRUE)
+} else if (grepl("ricard",Sys.info()['nodename'])) {
+    source("/homes/ricard/Guo_2017/met/dimensionality_reduction/load_settings.R")
+    # reticulate::use_python("/Users/ricard/anaconda3/envs/base_new/bin/python", required=TRUE)
 } else {
   stop("Computer not recognised")
 }
@@ -16,6 +19,8 @@ if (grepl("ricard",Sys.info()['nodename'])) {
 ###############################
 ## Load DNA methylation data ##
 ###############################
+
+print("Loading data...")
 
 met_dt <- lapply(names(opts$annos), function(n)
   fread(sprintf("%s/%s.tsv.gz",io$met_data_parsed,n), select=c(1,2,3,5,6)) %>% 

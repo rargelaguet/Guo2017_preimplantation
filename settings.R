@@ -7,14 +7,14 @@ io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
   io$basedir <- "/Users/ricard/data/Guo_2017"
 } else if (grepl("yoda",Sys.info()['nodename'])) {
-  # io$basedir <- "/hps/nobackup2/research/stegle/users/ricard/Guo_2017"
+  io$basedir <- "/hps/nobackup2/stegle/users/ricard/Guo_2017"
+  # io$basedir <- "/hps/nobackup2/research/stegle/users/Guo_2017"
 } else {
   stop("Computer not recognised")
 }
 
 io$metadata <- paste0(io$basedir,"/sample_metadata.txt")
 io$gene_metadata <- paste0(io$basedir,"/features/genes/Mmusculus_genes_BioMart.87.txt")
-
 
 io$met_data_raw <- paste0(io$basedir,"/met/cpg_level")
 io$met_data_parsed <- paste0(io$basedir,"/met/feature_level")

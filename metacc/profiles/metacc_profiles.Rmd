@@ -10,6 +10,7 @@ output:
 library(data.table)
 library(purrr)
 library(ggplot2)
+library(ggpubr)
 ```
 
 <!-- Define I/O and options -->
@@ -29,17 +30,17 @@ dir.create(io$outdir, showWarnings = F)
 ```
 
 <!-- (ONLY FOR TESTING) Subset cells to reduce memory burden -->
-```{r}
-# opts$ncells <- 3
-# opts$filt.cells <- sample_metadata[,head(unique(sample),n=opts$ncells),by="stage"] %>% .$V1
-# 
-# sample_metadata <- sample_metadata[sample %in% opts$filt.cells]
-# opts$met.cells <- sample_metadata$id_met
-# opts$acc.cells <- sample_metadata$id_acc
+```{r subset}
+opts$ncells <- 2
+opts$filt.cells <- sample_metadata[,head(unique(sample),n=opts$ncells),by="stage"] %>% .$V1
+
+sample_metadata <- sample_metadata[sample %in% opts$filt.cells]
+opts$met.cells <- sample_metadata$id_met
+opts$acc.cells <- sample_metadata$id_acc
 ```
 
 <!-- Load genomic annotations -->
-```{r load_data, echo=FALSE}
+```{r load_annotations, echo=FALSE}
 source(paste0(base,"/load_annotations.R"))
 ```
 
@@ -50,7 +51,7 @@ source(paste0(base,"/load_data.R"))
 ```
 
 <!-- Merge DNA methylation and chromatin acessibility data -->
-```{r}
+```{r merge}
 data <- rbind(
   met[,c("sample","stage","id","anno","dist","rate","context")],
   acc[,c("sample","stage","id","anno","dist","rate","context")]
@@ -65,13 +66,12 @@ data[,rate:=rate*100]
 
 Load pre-computed object
 ```{r}
-# saveRDS(data, paste0(io$outdir,"/precomputed.rds"))
-
+saveRDS(data, paste0(io$outdir,"/precomputed.rds"))
 # data <- readRDS("/Users/ricard/data/gastrulation/metacc/pseudobulked_profiles/lineage_enhancers/data.rds")
 ```
 
 <!-- Load genome-wide global methylation and accessibility rates -->
-```{r}
+```{r load_stats}
 met.stats <- fread(io$met.stats) %>%
   merge(sample_metadata[,.(sample,id_met)], by="id_met") %>% .[,context:="CG"]
 
@@ -81,18 +81,17 @@ acc.stats <- fread(io$acc.stats) %>%
 stats <- rbind(
   met.stats[,c("sample","mean","coverage","context")],
   acc.stats[,c("sample","mean","coverage","context")]
-) %>% merge(sample_metadata[,c("sample","stage")],by="sample")# %>%
-  # .[,.(mean=mean(mean)),by=c("stage","context")]
+) %>% merge(sample_metadata[,c("sample","stage")],by="sample")
 ```
 
 
 <!-- Plot joint methylation and accessibility profiles -->
 
 Per stage, genomic contexts side by side
-```{r}
+```{r plot1}
 p_list <- list()
 
-for (i in as.character(unique(data$stage))) {
+for (i in opts$stages) {
   print(i)
   
   tmp <- data[stage==i]
@@ -122,7 +121,7 @@ for (i in as.character(unique(data$stage))) {
 
 
 Per cell
-```{r}
+```{r plot2}
 p_list <- list()
 
 for (i in as.character(unique(data$sample))) {
@@ -155,62 +154,36 @@ for (i in as.character(unique(data$sample))) {
 ```
 
 ```{r}
-stop()
-```
-
-STOP HERE
-
-
-```{r}
-foo <- data[,.(ratio=mean(.SD[abs(dist)<200,rate])/mean(.SD[abs(dist)>1800,rate])), by=c("sample","context")] %>%
+to.plot <- data[,.(ratio=mean(.SD[abs(dist)==0,rate])/mean(.SD[abs(dist)>1800,rate])), by=c("sample","context")] %>%
   .[,context:=paste0("ratio_",context)] %>%
-  dcast(sample~context, value="ratio")
-
-bar <- foo %>% 
-  merge(stats%>%dcast(formula=sample~context, value.var=c("mean","coverage")), by="sample")
+  dcast(sample~context, value.var="ratio") %>% 
+  merge(stats %>% dcast(formula=sample~context, value.var=c("mean","coverage")), by="sample") %>%
+  merge(sample_metadata, by="sample")
 ```
 
 
 ```{r}
-ggscatter(bar, x="ratio_CG", y="ratio_GC", color="mean_CG", shape="pass_metQC") +
-  # coord_cartesian(xlim = c(0.01,1.01), ylim=c(0,2)) +
+p <- ggscatter(to.plot, x="ratio_CG", y="ratio_GC", color="mean_CG") +
   geom_hline(yintercept=1, linetype="dashed", color="black") +
   geom_vline(xintercept=1, linetype="dashed", color="black") +
-  geom_vline(xintercept=0.5, linetype="dashed", color="red") +
+  # geom_vline(xintercept=0.5, linetype="dashed", color="red") +
+  coord_cartesian(xlim=c(0.0,1.0), ylim=c(0.0,3.0)) +
   scale_colour_distiller(palette="Reds", direction=1)
 
-fail_metqc <- bar[pass_metQC==T & ratio_CG>0.5 ,sample]
+pdf(sprintf("%s/ratios/ratio_met.pdf",io$outdir), width=8.5, height=5)
+print(p)
+dev.off()
 ```
 
 ```{r}
-ggscatter(bar, x="ratio_CG", y="ratio_GC", color="mean_GC", shape="pass_accQC") +
-  # coord_cartesian(xlim = c(0.01,1.01), ylim=c(0,2)) +
+p <- ggscatter(to.plot, x="ratio_CG", y="ratio_GC", color="mean_GC") +
   geom_hline(yintercept=1, linetype="dashed", color="black") +
   geom_vline(xintercept=1, linetype="dashed", color="black") +
-  geom_hline(yintercept=1, linetype="dashed", color="blue") +
+  # geom_hline(yintercept=1, linetype="dashed", color="blue") +
+  coord_cartesian(xlim=c(0.0,1.0), ylim=c(0.0,3.0)) +
   scale_colour_distiller(palette="Blues", direction=1)
 
-fail_accqc <- bar[pass_metQC==T & ratio_GC<1 ,sample]
+pdf(sprintf("%s/ratios/ratio_acc.pdf",io$outdir), width=8.5, height=5)
+print(p)
+dev.off()
 ```
-
-```{r}
-table(metadata$pass_metQC)
-table(metadata$pass_accQC)
-```
-
-```{r}
-metadata <- fread(io$metadata)
-metadata %>%
-  .[sample%in%fail_metqc, pass_metQC:=FALSE] %>%
-  .[sample%in%fail_accqc, pass_accQC:=FALSE]
-```
-
-```{r}
-table(metadata$pass_metQC)
-table(metadata$pass_accQC)
-```
-
-```{r}
-# fwrite(metadata, io$metadata, sep="\t", col.names=T, row.names=F, quote=F, na="NA")
-```
-
