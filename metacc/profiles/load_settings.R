@@ -1,4 +1,11 @@
-source("/Users/ricard/Guo_2017/settings.R")
+if (grepl("ricard",Sys.info()['nodename'])) {
+  source("/Users/ricard/Guo_2017/settings.R")
+} else if (grepl("yoda",Sys.info()['nodename'])) {
+  source("/homes/ricard/Guo_2017/settings.R")
+} else {
+  stop("Computer not recognised")
+}
+
 
 # 
 opts$stages <- c(

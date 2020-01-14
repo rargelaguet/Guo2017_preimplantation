@@ -1,0 +1,145 @@
+---
+title: "Gastrulation scNMT-seq: pseudobulked profiles of DNA methylation and chromatin accessibility"
+output: 
+  BiocStyle::html_document: 
+    fig_width: 10
+    fig_height: 8
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(data.table)
+library(purrr)
+library(ggplot2)
+library(ggpubr)
+```
+
+<!-- Define I/O and options -->
+
+```{r define_options, echo=FALSE}
+if (grepl("ricard",Sys.info()['nodename'])) {
+  base <- "/Users/ricard/Guo_2017/metacc/profiles"
+} else if (grepl("yoda",Sys.info()['nodename'])) {
+  base <- "/homes/ricard/Guo_2017/metacc/profiles"
+} else {
+  stop("Computer not recognised")
+}
+
+source(paste0(base,"/load_settings.R"))
+
+io$outdir <- paste0(io$basedir,"/metacc/profiles")
+dir.create(io$outdir, showWarnings = F)
+```
+
+<!-- Load pre-computed object -->
+
+```{r}
+# saveRDS(data, paste0(io$outdir,"/precomputed.rds"))
+data <- readRDS(paste0(io$outdir,"/precomputed.rds"))
+```
+
+<!-- Load genome-wide global methylation and accessibility rates -->
+
+```{r load_stats}
+met.stats <- fread(io$met.stats) %>%
+  merge(sample_metadata[,.(sample,id_met)], by="id_met") %>% .[,context:="CG"]
+
+acc.stats <- fread(io$acc.stats) %>%
+  merge(sample_metadata[,.(sample,id_acc)], by="id_acc") %>% .[,context:="GC"]
+
+stats <- rbind(
+  met.stats[,c("sample","mean","coverage","context")],
+  acc.stats[,c("sample","mean","coverage","context")]
+) %>% merge(sample_metadata[,c("sample","stage")],by="sample")
+```
+
+<!-- Calculate CG and GC ratio -->
+
+```{r}
+to.plot <- data[,.(ratio=mean(.SD[abs(dist)==0,rate])/mean(.SD[abs(dist)==2000,rate])), by=c("sample","context")] %>%
+  .[,context:=paste0("ratio_",context)] %>%
+  dcast(sample~context, value.var="ratio") %>% 
+  merge(stats %>% dcast(formula=sample~context, value.var=c("mean","coverage")), by="sample") %>%
+  merge(sample_metadata, by="sample")
+```
+
+<!-- Plot CG ratio vs GC ratio -->
+
+```{r}
+p <- ggscatter(to.plot, x="ratio_CG", y="ratio_GC", color="mean_CG") +
+  geom_hline(yintercept=1, linetype="dashed", color="black") +
+  geom_vline(xintercept=1, linetype="dashed", color="black") +
+  # geom_vline(xintercept=0.5, linetype="dashed", color="red") +
+  # coord_cartesian(xlim=c(0.0,1.0), ylim=c(0.0,3.0)) +
+  scale_colour_distiller(palette="Reds", direction=1)
+
+pdf(sprintf("%s/ratios/ratio_colorbymeth.pdf",io$outdir), width=8.5, height=5)
+print(p)
+dev.off()
+```
+
+```{r}
+p <- ggscatter(to.plot, x="ratio_CG", y="ratio_GC", color="mean_GC") +
+  geom_hline(yintercept=1, linetype="dashed", color="black") +
+  geom_vline(xintercept=1, linetype="dashed", color="black") +
+  # geom_hline(yintercept=1, linetype="dashed", color="blue") +
+  # coord_cartesian(xlim=c(0.0,1.0), ylim=c(0.0,3.0)) +
+  scale_colour_distiller(palette="Blues", direction=1)
+
+pdf(sprintf("%s/ratios/ratio_colorbyacc.pdf",io$outdir), width=8.5, height=5)
+print(p)
+dev.off()
+```
+
+
+```{r}
+p <- ggscatter(to.plot, x="ratio_CG", y="ratio_GC", color="stage") +
+  geom_hline(yintercept=1, linetype="dashed", color="black") +
+  geom_vline(xintercept=1, linetype="dashed", color="black")
+  # geom_vline(xintercept=0.5, linetype="dashed", color="red") +
+  # coord_cartesian(xlim=c(0.0,1.5), ylim=c(0.0,3.0))
+
+pdf(sprintf("%s/ratios/ratio_colorbystage.pdf",io$outdir), width=8.5, height=5)
+print(p)
+dev.off()
+```
+ 
+ 
+<!-- Update sample metadata -->
+ 
+Methylation
+```{r}
+opts$threshold.cg.ratio <- 1.0
+opts$threshold.gc.ratio <- 1.0
+
+failqc.met <- to.plot[ratio_CG>opts$threshold.cg.ratio,id_met] %>% as.character
+failqc.acc <- to.plot[ratio_GC<opts$threshold.gc.ratio,id_acc] %>% as.character
+
+print("Fail QC for methylation:")
+print(length(failqc.met))
+
+print("Fail QC for accessibility:")
+print(length(failqc.acc))
+```
+ 
+ 
+
+# print(failqc)
+
+
+<!-- Update sample metadata -->
+```{r}
+sample_metadata_updated <- fread(io$metadata)
+sample_metadata_updated <- sample_metadata_updated[,pass_metQC:=ifelse(id_met%in%failqc.met,F,T)]
+sample_metadata_updated <- sample_metadata_updated[,pass_accQC:=ifelse(id_acc%in%failqc.acc,F,T)]
+```
+
+```{r}
+table(sample_metadata_updated$pass_metQC)
+table(sample_metadata_updated$pass_accQC)
+```
+
+```{r}
+fwrite(sample_metadata_updated, io$metadata, sep="\t", col.names=T, row.names=F, quote=F, na="NA")
+```
+
+

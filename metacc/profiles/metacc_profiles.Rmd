@@ -31,12 +31,12 @@ dir.create(io$outdir, showWarnings = F)
 
 <!-- (ONLY FOR TESTING) Subset cells to reduce memory burden -->
 ```{r subset}
-opts$ncells <- 2
-opts$filt.cells <- sample_metadata[,head(unique(sample),n=opts$ncells),by="stage"] %>% .$V1
-
-sample_metadata <- sample_metadata[sample %in% opts$filt.cells]
-opts$met.cells <- sample_metadata$id_met
-opts$acc.cells <- sample_metadata$id_acc
+# opts$ncells <- 2
+# opts$filt.cells <- sample_metadata[,head(unique(sample),n=opts$ncells),by="stage"] %>% .$V1
+# 
+# sample_metadata <- sample_metadata[sample %in% opts$filt.cells]
+# opts$met.cells <- sample_metadata$id_met
+# opts$acc.cells <- sample_metadata$id_acc
 ```
 
 <!-- Load genomic annotations -->
@@ -66,8 +66,8 @@ data[,rate:=rate*100]
 
 Load pre-computed object
 ```{r}
-saveRDS(data, paste0(io$outdir,"/precomputed.rds"))
-# data <- readRDS("/Users/ricard/data/gastrulation/metacc/pseudobulked_profiles/lineage_enhancers/data.rds")
+# saveRDS(data, paste0(io$outdir,"/precomputed.rds"))
+data <- readRDS(paste0(io$outdir,"/precomputed.rds"))
 ```
 
 <!-- Load genome-wide global methylation and accessibility rates -->
@@ -151,39 +151,4 @@ for (i in as.character(unique(data$sample))) {
   print(p_list[[i]])
   dev.off()
 }
-```
-
-```{r}
-to.plot <- data[,.(ratio=mean(.SD[abs(dist)==0,rate])/mean(.SD[abs(dist)>1800,rate])), by=c("sample","context")] %>%
-  .[,context:=paste0("ratio_",context)] %>%
-  dcast(sample~context, value.var="ratio") %>% 
-  merge(stats %>% dcast(formula=sample~context, value.var=c("mean","coverage")), by="sample") %>%
-  merge(sample_metadata, by="sample")
-```
-
-
-```{r}
-p <- ggscatter(to.plot, x="ratio_CG", y="ratio_GC", color="mean_CG") +
-  geom_hline(yintercept=1, linetype="dashed", color="black") +
-  geom_vline(xintercept=1, linetype="dashed", color="black") +
-  # geom_vline(xintercept=0.5, linetype="dashed", color="red") +
-  coord_cartesian(xlim=c(0.0,1.0), ylim=c(0.0,3.0)) +
-  scale_colour_distiller(palette="Reds", direction=1)
-
-pdf(sprintf("%s/ratios/ratio_met.pdf",io$outdir), width=8.5, height=5)
-print(p)
-dev.off()
-```
-
-```{r}
-p <- ggscatter(to.plot, x="ratio_CG", y="ratio_GC", color="mean_GC") +
-  geom_hline(yintercept=1, linetype="dashed", color="black") +
-  geom_vline(xintercept=1, linetype="dashed", color="black") +
-  # geom_hline(yintercept=1, linetype="dashed", color="blue") +
-  coord_cartesian(xlim=c(0.0,1.0), ylim=c(0.0,3.0)) +
-  scale_colour_distiller(palette="Blues", direction=1)
-
-pdf(sprintf("%s/ratios/ratio_acc.pdf",io$outdir), width=8.5, height=5)
-print(p)
-dev.off()
 ```
