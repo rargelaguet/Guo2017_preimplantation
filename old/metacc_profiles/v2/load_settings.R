@@ -5,7 +5,7 @@
 
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
-  io$basedir <- "/Users/ricard/data/Guo_2017"
+  io$basedir <- "/Users/ricard/data/Guo2017_preimplantation"
 } else {
   stop()
 }

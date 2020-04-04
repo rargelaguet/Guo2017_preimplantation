@@ -9,8 +9,8 @@ suppressMessages(library(doParallel))
 ## I/O ##
 
 io <- list()
-io$indir <- "/Users/ricard/data/Guo_2017/met/cpg_level/pseudobulk"
-io$outdir <- "/Users/ricard/data/Guo_2017/met/cpg_level/pseudobulk/seqmonk"
+io$indir <- "/Users/ricard/data/Guo2017_preimplantation/met/cpg_level/pseudobulk"
+io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/met/cpg_level/pseudobulk/seqmonk"
 dir.create(io$outdir, showWarnings=F)
 
 ## options ##

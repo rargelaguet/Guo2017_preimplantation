@@ -7,10 +7,10 @@ library(purrr)
 #####################
 
 if (grepl("ricard",Sys.info()['nodename'])) {
-  source("/Users/ricard/Guo_2017/met/dimensionality_reduction/load_settings.R")
+  source("/Users/ricard/Guo2017_preimplantation/met/dimensionality_reduction/load_settings.R")
   reticulate::use_python("/Users/ricard/anaconda3/envs/base_new/bin/python", required=TRUE)
 } else if (grepl("ricard",Sys.info()['nodename'])) {
-    source("/homes/ricard/Guo_2017/met/dimensionality_reduction/load_settings.R")
+    source("/homes/ricard/Guo2017_preimplantation/met/dimensionality_reduction/load_settings.R")
     # reticulate::use_python("/Users/ricard/anaconda3/envs/base_new/bin/python", required=TRUE)
 } else {
   stop("Computer not recognised")

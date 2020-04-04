@@ -8,8 +8,8 @@ suppressPackageStartupMessages(library(purrr))
 #####################
 
 if (grepl("ricard",Sys.info()['nodename'])) {
-  source("/Users/ricard/Guo_2017/settings.R")
-  source("/Users/ricard/Guo_2017/metacc/plot_examples/load_data.R")
+  source("/Users/ricard/Guo2017_preimplantation/settings.R")
+  source("/Users/ricard/Guo2017_preimplantation/metacc/plot_examples/load_data.R")
 } else {
   stop("Computer not recognised")
 }

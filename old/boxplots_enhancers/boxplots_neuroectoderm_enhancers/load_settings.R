@@ -5,7 +5,7 @@
 
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
-  io$basedir <- "/Users/ricard/data/Guo_2017"
+  io$basedir <- "/Users/ricard/data/Guo2017_preimplantation"
 } else {
   stop()
 }
@@ -25,7 +25,7 @@ io$met.stats <- paste0(io$basedir,"/met/stats/stats.txt")
 io$acc.stats <- paste0(io$basedir,"/acc/stats/stats.txt")
 
 # Output directory
-io$outdir <- "/Users/ricard/data/Guo_2017/metacc/profiles_enhancers"
+io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/metacc/profiles_enhancers"
 
 ####################
 ## Define options ##

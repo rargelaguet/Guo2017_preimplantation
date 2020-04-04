@@ -3,7 +3,7 @@
 ################
 
 if (grepl("ricard",Sys.info()['nodename'])) {
-  source("/Users/ricard/Guo_2017/settings.R")
+  source("/Users/ricard/Guo2017_preimplantation/settings.R")
 } else {
   stop("Computer not recognised")
 }

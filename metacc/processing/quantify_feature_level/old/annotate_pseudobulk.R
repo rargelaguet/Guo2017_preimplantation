@@ -28,7 +28,7 @@ stopifnot(opts$context %in% c("CG","GC"))
 
 ## Own computer ##
 if (grepl("ricard",Sys.info()['nodename'])) {
-  io$basedir <- "/Users/ricard/data/Guo_2017"
+  io$basedir <- "/Users/ricard/data/Guo2017_preimplantation"
   io$anno.folder <- paste0(io$basedir,"/features/filt")
   io$in.sample_metadata <- paste0(io$basedir,"/sample_metadata_pseudobulk.txt")
   
@@ -44,7 +44,7 @@ if (grepl("ricard",Sys.info()['nodename'])) {
   
 ## Cluster ##
 } else {
-  io$basedir <- "/hps/nobackup/stegle/users/ricard/Guo_2017"
+  io$basedir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation"
   io$anno.folder <- paste0(io$basedir,"/features/filt")
   io$in.sample_metadata <- paste0(io$basedir,"/sample_metadata.txt")
 

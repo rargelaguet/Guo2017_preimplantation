@@ -51,18 +51,18 @@ opts$output_format <- 1
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
   if (opts$context=="CG") {
-    io$indir <- "/Users/ricard/data/Guo_2017/met/cpg_level"
-    io$outdir <- "/Users/ricard/data/Guo_2017/met/strand"
+    io$indir <- "/Users/ricard/data/Guo2017_preimplantation/met/cpg_level"
+    io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/met/strand"
   } else {
     stop()
   }
 } else {
   if (opts$context=="CG") {
-    # io$indir <- "/hps/nobackup/stegle/users/ricard/Guo_2017/met/liftover"
-    # io$outdir <- "/hps/nobackup/stegle/users/ricard/Guo_2017/met/liftover/strand"
+    # io$indir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/met/liftover"
+    # io$outdir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/met/liftover/strand"
   } else {
-    # io$indir <- "/hps/nobackup/stegle/users/ricard/Guo_2017/acc/liftover"
-    # io$outdir <- "/hps/nobackup/stegle/users/ricard/Guo_2017/acc/liftover/strand"
+    # io$indir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/acc/liftover"
+    # io$outdir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/acc/liftover/strand"
   }
 }
 dir.create(io$outdir)

@@ -2,7 +2,7 @@ library(data.table)
 library(purrr)
 
 io <- list()
-io$basedir <- "/Users/ricard/data/Guo_2017"
+io$basedir <- "/Users/ricard/data/Guo2017_preimplantation"
 io$metadata <- paste0(io$basedir,"/sample_metadata.txt")
 
 sample_metadata <- fread(io$metadata) 

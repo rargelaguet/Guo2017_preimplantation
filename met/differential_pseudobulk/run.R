@@ -5,12 +5,12 @@
 ## I/O ##
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
-  io$script <- "/Users/ricard/Guo_2017/met/differential_pseudobulk/diffmet_pseudobulk.R"
-  io$outdir <- "/Users/ricard/data/Guo_2017/met/differential/pseudobulk"
+  io$script <- "/Users/ricard/Guo2017_preimplantation/met/differential_pseudobulk/diffmet_pseudobulk.R"
+  io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/met/differential/pseudobulk"
 } else if (grepl("ricard",Sys.info()['nodename'])) {
-  # io$script <- "/homes/ricard/Guo_2017/met/differential/feature_level/diffmet_supervised.R"
-  # io$outdir <- "/hps/nobackup/stegle/users/ricard/Guo_2017/met/differential/feature_level/test"
-  # io$tmpdir <- "/hps/nobackup/stegle/users/ricard/Guo_2017/met/differential/feature_level/tmp"
+  # io$script <- "/homes/ricard/Guo2017_preimplantation/met/differential/feature_level/diffmet_supervised.R"
+  # io$outdir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/met/differential/feature_level/test"
+  # io$tmpdir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/met/differential/feature_level/tmp"
 } else {
   stop("Computer not recognised")
 }

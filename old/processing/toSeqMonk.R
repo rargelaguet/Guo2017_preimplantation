@@ -9,11 +9,11 @@ suppressMessages(library(doParallel))
 ## I/O ##
 
 io <- list()
-io$sample.metadata <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
-# io$indir <- "/Users/ricard/data/Guo_2017/met/cpg_level"
-# io$outdir <- "/Users/ricard/data/Guo_2017/met/cpg_level/seqmonk"
-io$indir <- "/Users/ricard/data/Guo_2017/acc/gpc_level"
-io$outdir <- "/Users/ricard/data/Guo_2017/acc/gpc_level/seqmonk"; dir.create(io$outdir)
+io$sample.metadata <- "/Users/ricard/data/Guo2017_preimplantation/sample_metadata.txt"
+# io$indir <- "/Users/ricard/data/Guo2017_preimplantation/met/cpg_level"
+# io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/met/cpg_level/seqmonk"
+io$indir <- "/Users/ricard/data/Guo2017_preimplantation/acc/gpc_level"
+io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/acc/gpc_level/seqmonk"; dir.create(io$outdir)
 
 ## options ##
 opts <- list()

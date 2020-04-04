@@ -14,7 +14,7 @@ matrix.please <- function(x) {
   m
 }
 
-source("/Users/ricard/Guo_2017/mofa/load_settings.R")
+source("/Users/ricard/Guo2017_preimplantation/mofa/load_settings.R")
 
 ###########################
 ## Load Methylation data ##

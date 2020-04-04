@@ -35,13 +35,13 @@ fread_and_merge <- function(dt, file){
 io <- list()
 
 if (grepl("ricard",Sys.info()['nodename'])) {
-  io$in.data <- "/Users/ricard/data/Guo_2017/acc/gpc_level"
-  io$in.metadata <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
-  io$out.dir <- "/Users/ricard/data/Guo_2017/acc/gpc_level/pseudobulk"
+  io$in.data <- "/Users/ricard/data/Guo2017_preimplantation/acc/gpc_level"
+  io$in.metadata <- "/Users/ricard/data/Guo2017_preimplantation/sample_metadata.txt"
+  io$out.dir <- "/Users/ricard/data/Guo2017_preimplantation/acc/gpc_level/pseudobulk"
 } else {
-  io$in.data <- "/hps/nobackup/stegle/users/ricard/Guo_2017/acc/gpc_level"
-  io$in.metadata <- "/hps/nobackup/stegle/users/ricard/Guo_2017/sample_metadata.txt"
-  io$out.dir <- "/hps/nobackup/stegle/users/ricard/Guo_2017/acc/gpc_level/pseudobulk"
+  io$in.data <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/acc/gpc_level"
+  io$in.metadata <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/sample_metadata.txt"
+  io$out.dir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/acc/gpc_level/pseudobulk"
 }
 
 

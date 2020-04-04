@@ -17,11 +17,11 @@ args <- p$parse_args(commandArgs(TRUE))
 
 ## Define I/O ##
 if (grepl("ricard",Sys.info()['nodename'])) {
-  source("/Users/ricard/Guo_2017/settings.R")
-  source("/Users/ricard/Guo_2017/met/differential_pseudobulk/utils.R")
+  source("/Users/ricard/Guo2017_preimplantation/settings.R")
+  source("/Users/ricard/Guo2017_preimplantation/met/differential_pseudobulk/utils.R")
 } else if(grepl("yoda",Sys.info()['nodename'])){
-  source("/homes/ricard/Guo_2017/settings.R")
-  source("/homes/ricard/Guo_2017/met/differential_pseudobulk/utils.R")
+  source("/homes/ricard/Guo2017_preimplantation/settings.R")
+  source("/homes/ricard/Guo2017_preimplantation/met/differential_pseudobulk/utils.R")
 } else {
   stop("Computer not recognised")
 }

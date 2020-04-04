@@ -11,10 +11,10 @@ library(ggplot2)
 ## Define settings ##
 #####################
 
-source("/Users/ricard/Guo_2017/settings.R")
+source("/Users/ricard/Guo2017_preimplantation/settings.R")
 
-io$input.file <- "/Users/ricard/data/Guo_2017/met/trinucleotides/trinucleotide_stats.txt.gz"
-io$outdir <- "/Users/ricard/data/Guo_2017/met/trinucleotides"
+io$input.file <- "/Users/ricard/data/Guo2017_preimplantation/met/trinucleotides/trinucleotide_stats.txt.gz"
+io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/met/trinucleotides"
 
 ###############
 ## Load data ##

@@ -8,7 +8,7 @@ suppressMessages(library(MOFA2))
 ## Define I/O and options ##
 ############################
 
-source("/Users/ricard/Guo_2017/met/dimensionality_reduction/load_settings.R")
+source("/Users/ricard/Guo2017_preimplantation/met/dimensionality_reduction/load_settings.R")
 
 ################
 ## Load model ##

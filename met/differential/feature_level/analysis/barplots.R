@@ -8,7 +8,7 @@ library(purrr)
 library(ggplot2)
 library(RColorBrewer)
 
-source("/Users/ricard/Guo_2017/met/differential/feature_level/analysis/utils.R")
+source("/Users/ricard/Guo2017_preimplantation/met/differential/feature_level/analysis/utils.R")
 
 #####################
 ## Define settings ##
@@ -16,8 +16,8 @@ source("/Users/ricard/Guo_2017/met/differential/feature_level/analysis/utils.R")
 
 ## I/O ##
 io <- list()
-io$input.dir <- "/Users/ricard/data/Guo_2017/met/differential/feature_level"
-io$outdir <- "/Users/ricard/data/Guo_2017/met/differential/feature_level/pdf"
+io$input.dir <- "/Users/ricard/data/Guo2017_preimplantation/met/differential/feature_level"
+io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/met/differential/feature_level/pdf"
 dir.create(io$outdir, showWarnings = F)
 
 ## Options ##

@@ -8,7 +8,7 @@ suppressMessages(library(MOFA2))
 ## Define I/O and options ##
 ############################
 
-source("/Users/ricard/Guo_2017/mofa/load_settings.R")
+source("/Users/ricard/Guo2017_preimplantation/mofa/load_settings.R")
 
 if (file.exists(paste0(io$basedir,"/mofa/rds/model.rds"))) {
   

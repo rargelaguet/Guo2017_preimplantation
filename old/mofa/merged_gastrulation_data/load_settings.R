@@ -13,12 +13,12 @@ matrix.please <- function(x) {
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
   io$basedir1 <- "/Users/ricard/data/gastrulation"
-  io$basedir2 <- "/Users/ricard/data/Guo_2017"
+  io$basedir2 <- "/Users/ricard/data/Guo2017_preimplantation"
   io$gene_metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
-  io$outdir <- "/Users/ricard/data/Guo_2017/mofa"
+  io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/mofa"
 } else {
   # io$basedir <- "/hps/nobackup/stegle/users/ricard/gastrulation"
-  # io$basedir2 <- "/hps/nobackup/stegle/users/ricard/Guo_2017"
+  # io$basedir2 <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation"
   # io$gene_metadata <- "/hps/nobackup/stegle/users/ricard/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
   # io$outdir <- "/homes/ricard/gastrulation/metaccrna/mofa/E7.5/out"
 }

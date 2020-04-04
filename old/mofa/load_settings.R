@@ -7,11 +7,11 @@ library(purrr)
 
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
-  io$basedir <- "/Users/ricard/data/Guo_2017"
+  io$basedir <- "/Users/ricard/data/Guo2017_preimplantation"
   io$gene_metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
-  io$outdir <- "/Users/ricard/data/Guo_2017/mofa"
+  io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/mofa"
 } else {
-  # io$basedir <- "/hps/nobackup/stegle/users/ricard/Guo_2017"
+  # io$basedir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation"
   # io$gene_metadata <- "/hps/nobackup/stegle/users/ricard/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
   # io$outdir <- "/homes/ricard/gastrulation/metaccrna/mofa/E7.5/out"
 }

@@ -4,11 +4,11 @@ library(liftOver)
 library(GenomicRanges)
 
 io <- list()
-# io$indir <- "/Users/ricard/data/Guo_2017/acc/raw"
-# io$outdir <- "/Users/ricard/data/Guo_2017/acc/raw/liftover"; dir.create(io$outdir)
+# io$indir <- "/Users/ricard/data/Guo2017_preimplantation/acc/raw"
+# io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/acc/raw/liftover"; dir.create(io$outdir)
 
-io$indir <- "/hps/nobackup/stegle/users/ricard/Guo_2017/acc/not_used/ESC"
-io$outdir <- "/hps/nobackup/stegle/users/ricard/Guo_2017/acc/not_used/ESC/liftover"; dir.create(io$outdir)
+io$indir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/acc/not_used/ESC"
+io$outdir <- "/hps/nobackup/stegle/users/ricard/Guo2017_preimplantation/acc/not_used/ESC/liftover"; dir.create(io$outdir)
 
 
 # Liftover from mm9 to mm10

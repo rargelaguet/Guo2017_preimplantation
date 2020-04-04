@@ -5,13 +5,13 @@
 ## I/O ##
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
-  io$script <- "/Users/ricard/Guo_2017/met/differential/feature_level/diffmet_feature_level.R"
-  io$outdir <- "/Users/ricard/data/Guo_2017/met/differential/feature_level"
-  ricard/Guo_2017/met/differential/feature_level
+  io$script <- "/Users/ricard/Guo2017_preimplantation/met/differential/feature_level/diffmet_feature_level.R"
+  io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/met/differential/feature_level"
+  ricard/Guo2017_preimplantation/met/differential/feature_level
 } else if(grepl("yoda",Sys.info()['nodename'])){
-  io$script <- "/homes/ricard/Guo_2017/met/differential/feature_level/diffmet_feature_level.R"
-  io$outdir <- "/hps/nobackup2/stegle/users/ricard/Guo_2017/met/differential/feature_level"
-  io$tmpdir <- "/hps/nobackup2/stegle/users/ricard/Guo_2017/met/differential/feature_level/tmp"; dir.create(io$tmpdir, showWarnings=F)
+  io$script <- "/homes/ricard/Guo2017_preimplantation/met/differential/feature_level/diffmet_feature_level.R"
+  io$outdir <- "/hps/nobackup2/stegle/users/ricard/Guo2017_preimplantation/met/differential/feature_level"
+  io$tmpdir <- "/hps/nobackup2/stegle/users/ricard/Guo2017_preimplantation/met/differential/feature_level/tmp"; dir.create(io$tmpdir, showWarnings=F)
 } else {
   stop("Computer not recognised")
 }

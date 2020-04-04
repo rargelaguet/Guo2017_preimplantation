@@ -8,7 +8,7 @@ library(purrr)
 library(ggplot2)
 library(RColorBrewer)
 
-source("/Users/ricard/Guo_2017/differential/differential_pseudobulk/utils.R")
+source("/Users/ricard/Guo2017_preimplantation/differential/differential_pseudobulk/utils.R")
 
 #####################
 ## Define settings ##
@@ -16,8 +16,8 @@ source("/Users/ricard/Guo_2017/differential/differential_pseudobulk/utils.R")
 
 ## I/O ##
 io <- list()
-io$input.dir <- "/Users/ricard/data/Guo_2017/met/differential/pseudobulk"
-io$outdir <- "/Users/ricard/data/Guo_2017/met/differential/pseudobulk/pdf"
+io$input.dir <- "/Users/ricard/data/Guo2017_preimplantation/met/differential/pseudobulk"
+io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/met/differential/pseudobulk/pdf"
 
 ## Options ##
 opts <- list()
