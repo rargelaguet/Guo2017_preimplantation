@@ -16,8 +16,8 @@ library(ggplot2)
 <!-- Define I/O and options -->
 ```{r define_opts, echo=FALSE}
 if (grepl("ricard",Sys.info()['nodename'])) {
-  source("/Users/ricard/Guo_2017/met/boxplots/load_settings.R")
-  source("/Users/ricard/Guo_2017/metacc/boxplots/utils.R")
+  source("/Users/ricard/Guo2017_preimplantation/met/boxplots/load_settings.R")
+  source("/Users/ricard/Guo2017_preimplantation/metacc/boxplots/utils.R")
 } else {
   stop("Computer not recognised")
 }

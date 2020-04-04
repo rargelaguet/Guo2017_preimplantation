@@ -18,9 +18,9 @@ library(ggpubr)
 ## I/O ##
 io <- list()
 
-io$metadata <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
-io$data <- "/Users/ricard/data/Guo_2017/acc/gpc_level"
-io$outdir <- "/Users/ricard/Guo_2017/out"
+io$metadata <- "/Users/ricard/data/Guo2017_preimplantation/sample_metadata.txt"
+io$data <- "/Users/ricard/data/Guo2017_preimplantation/acc/gpc_level"
+io$outdir <- "/Users/ricard/Guo2017_preimplantation/out"
 
 
 ## Options ##
@@ -88,7 +88,7 @@ print(p)
 <!-- Correlate global accessibility rate vs MT accessibility rate -->
 
 ```{r}
-# stats <- fread("/Users/ricard/data/Guo_2017/acc/stats/stats.txt") %>%
+# stats <- fread("/Users/ricard/data/Guo2017_preimplantation/acc/stats/stats.txt") %>%
 #   .[,mean:=mean/100]
 # 
 # to.plot <- dt[,.(rate=mean(rate)), by="id_acc"] %>%

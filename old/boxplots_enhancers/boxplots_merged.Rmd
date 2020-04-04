@@ -40,7 +40,7 @@ io <- list()
 # General
 io$annos_dir <- "/Users/ricard/data/gastrulation/features/filt"
 io$gene_metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
-io$outdir <- "/Users/ricard/Guo_2017/boxplots_enhancers/out"
+io$outdir <- "/Users/ricard/Guo2017_preimplantation/boxplots_enhancers/out"
 
 # Argelaguet2019
 io$sample.metadata1 <- "/Users/ricard/data/gastrulation/sample_metadata_scNMT.txt"
@@ -48,9 +48,9 @@ io$met.dir1 <- "/Users/ricard/data/gastrulation/met/parsed"
 io$acc.dir1 <- "/Users/ricard/data/gastrulation/acc/parsed"
 
 # Guo2017_preimplantation
-io$sample.metadata2 <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
-io$met.dir2 <- "/Users/ricard/data/Guo_2017/met/feature_level"
-io$acc.dir2 <- "/Users/ricard/data/Guo_2017/acc/feature_level"
+io$sample.metadata2 <- "/Users/ricard/data/Guo2017_preimplantation/sample_metadata.txt"
+io$met.dir2 <- "/Users/ricard/data/Guo2017_preimplantation/met/feature_level"
+io$acc.dir2 <- "/Users/ricard/data/Guo2017_preimplantation/acc/feature_level"
 ```
 
 <!-- Define options -->
@@ -159,7 +159,7 @@ acc_dt <- rbind(acc_dt1,acc_dt2)
 # Mesoderm-specific
 
 # Ectoderm-specific
-diff.met.ect <- fread("/Users/ricard/Guo_2017/mofa/out/Factor_Met_EctEnhancers_top100.txt") %>% 
+diff.met.ect <- fread("/Users/ricard/Guo2017_preimplantation/mofa/out/Factor_Met_EctEnhancers_top100.txt") %>% 
   .[,sign:=value>0] %>% 
   setnames("feature","id") %>%
   .[,id:=substr(id,1,nchar(id)-3)] %>%
@@ -173,7 +173,7 @@ diff.met.ect <- fread("/Users/ricard/Guo_2017/mofa/out/Factor_Met_EctEnhancers_t
 # Mesoderm-specific
 
 # Ectoderm-specific
-diff.acc.ect <- fread("/Users/ricard/Guo_2017/mofa/out/Factor_Acc_EctEnhancers_top100.txt") %>% 
+diff.acc.ect <- fread("/Users/ricard/Guo2017_preimplantation/mofa/out/Factor_Acc_EctEnhancers_top100.txt") %>% 
   .[,sign:=value>0] %>%
   setnames("feature","id") %>%
   .[,id:=substr(id,1,nchar(id)-3)]

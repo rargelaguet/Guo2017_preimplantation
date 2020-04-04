@@ -14,7 +14,7 @@ library(ggplot2)
 
 <!-- Define I/O and options -->
 ```{r define_options, echo=FALSE}
-source("/Users/ricard/Guo_2017/metacc_profiles/v2/load_settings.R")
+source("/Users/ricard/Guo2017_preimplantation/metacc_profiles/v2/load_settings.R")
 ```
 
 <!-- Load sample metadata -->
@@ -43,7 +43,7 @@ source("/Users/ricard/gastrulation/metacc/pseudobulk_profiles/load_annotations.R
 ```{r load_data, echo=FALSE}
 anno_df.met <- anno_df
 anno_df.acc <- anno_df
-source("/Users/ricard/Guo_2017/metacc_profiles/v2/load_data.R")
+source("/Users/ricard/Guo2017_preimplantation/metacc_profiles/v2/load_data.R")
 ```
 
 <!-- Merge DNA methylation and chromatin acessibility data -->

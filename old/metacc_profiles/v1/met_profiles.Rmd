@@ -1,5 +1,5 @@
 ---
-title: "Guo_2017: pseudobulked profiles of DNA methylation"
+title: "Guo2017_preimplantation: pseudobulked profiles of DNA methylation"
 output: 
   BiocStyle::html_document: 
     fig_width: 10
@@ -45,8 +45,8 @@ theme_pub <- function() {
 
 ## I/O ##
 io <- list()
-io$basedir <- "/Users/ricard/data/Guo_2017"
-io$outdir <- "/Users/ricard/Guo_2017/met/profiles/out"
+io$basedir <- "/Users/ricard/data/Guo2017_preimplantation"
+io$outdir <- "/Users/ricard/Guo2017_preimplantation/met/profiles/out"
 io$data.indir <- paste(io$basedir,"met/raw",sep="/")
 io$in.sample_metadata <- paste0(io$basedir,"/sample_metadata.txt")
 io$features.indir <- paste(io$basedir,"features/filt",sep="/")

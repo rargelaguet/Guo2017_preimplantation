@@ -30,7 +30,7 @@ theme_pb <- function() {
 
 <!-- Define I/O and options -->
 ```{r define_opts, echo=FALSE}
-source("/Users/ricard/Guo_2017/boxplots_neuroectoderm_enhancers/load_settings.R")
+source("/Users/ricard/Guo2017_preimplantation/boxplots_neuroectoderm_enhancers/load_settings.R")
 io$esc_vs_brain <- "/Users/ricard/data/gastrulation/H3K27ac/E7.5_enhancers_Ect_ESC_brain_top250.txt"
 ```
 

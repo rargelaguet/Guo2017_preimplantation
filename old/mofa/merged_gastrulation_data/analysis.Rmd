@@ -19,8 +19,8 @@ library(corrplot)
 ```
 
 ```{r}
-source("/Users/ricard/Guo_2017/biofam/load_settings.R")
-source("/Users/ricard/Guo_2017/biofam/load_metadata.R")
+source("/Users/ricard/Guo2017_preimplantation/biofam/load_settings.R")
+source("/Users/ricard/Guo2017_preimplantation/biofam/load_metadata.R")
 ```
 
 <!-- Load pretrained model -->

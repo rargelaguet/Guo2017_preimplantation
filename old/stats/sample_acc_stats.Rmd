@@ -40,10 +40,10 @@ theme_pub <- function() {
 
 ## Define I/O 
 io <- list()
-io$in.metadata <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
-io$in.data <- "/Users/ricard/data/Guo_2017/acc/gpc_level"
-# io$annos_dir  <- "/Users/ricard/data/Guo_2017/features/filt"
-io$stats <- "/Users/ricard/data/Guo_2017/acc/stats/stats.txt"
+io$in.metadata <- "/Users/ricard/data/Guo2017_preimplantation/sample_metadata.txt"
+io$in.data <- "/Users/ricard/data/Guo2017_preimplantation/acc/gpc_level"
+# io$annos_dir  <- "/Users/ricard/data/Guo2017_preimplantation/features/filt"
+io$stats <- "/Users/ricard/data/Guo2017_preimplantation/acc/stats/stats.txt"
 # io$outdir <- "/Users/ricard/gastrulation/acc/stats/samples/out"
 
 ## Define options

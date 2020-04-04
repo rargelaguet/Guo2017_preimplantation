@@ -38,10 +38,10 @@ theme_pb <- function() {
 
 ## Define I/O ##
 io <- list()
-io$sample.metadata <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
-io$met.dir <- "/Users/ricard/data/Guo_2017/met/feature_level"
-io$acc.dir <- "/Users/ricard/data/Guo_2017/acc/feature_level"
-io$outdir <- "/Users/ricard/Guo_2017/boxplots_enhancers/out"
+io$sample.metadata <- "/Users/ricard/data/Guo2017_preimplantation/sample_metadata.txt"
+io$met.dir <- "/Users/ricard/data/Guo2017_preimplantation/met/feature_level"
+io$acc.dir <- "/Users/ricard/data/Guo2017_preimplantation/acc/feature_level"
+io$outdir <- "/Users/ricard/Guo2017_preimplantation/boxplots_enhancers/out"
 io$annos_dir <- "/Users/ricard/data/gastrulation/features/filt"
 io$gene_metadata <- "/Users/ricard/data/ensembl/mouse/v87/BioMart/mRNA/Mmusculus_genes_BioMart.87.txt"
 

@@ -16,9 +16,9 @@ library(ggpubr)
 <!-- Define I/O and options -->
 ```{r define_options, echo=FALSE}
 if (grepl("ricard",Sys.info()['nodename'])) {
-  base <- "/Users/ricard/Guo_2017/metacc/profiles"
+  base <- "/Users/ricard/Guo2017_preimplantation/metacc/profiles"
 } else if (grepl("yoda",Sys.info()['nodename'])) {
-  base <- "/homes/ricard/Guo_2017/metacc/profiles"
+  base <- "/homes/ricard/Guo2017_preimplantation/metacc/profiles"
 } else {
   stop("Computer not recognised")
 }

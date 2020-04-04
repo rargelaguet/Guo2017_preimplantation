@@ -18,9 +18,9 @@ library(ggpubr)
 ## I/O ##
 io <- list()
 
-io$metadata <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
-io$data <- "/Users/ricard/data/Guo_2017/met/cpg_level"
-io$outdir <- "/Users/ricard/Guo_2017/out"
+io$metadata <- "/Users/ricard/data/Guo2017_preimplantation/sample_metadata.txt"
+io$data <- "/Users/ricard/data/Guo2017_preimplantation/met/cpg_level"
+io$outdir <- "/Users/ricard/Guo2017_preimplantation/out"
 
 
 ## Options ##
