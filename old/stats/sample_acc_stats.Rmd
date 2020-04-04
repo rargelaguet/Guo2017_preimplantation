@@ -1,5 +1,5 @@
 ---
-title: "Guo2017: general accessibility statistics of cells"
+title: "Guo2017_preimplantation: general accessibility statistics of cells"
 output:
   BiocStyle::html_document: 
     toc: false

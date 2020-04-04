@@ -1,9 +1,5 @@
 ---
-title: "Gastrulation scNMT-seq: pseudobulked profiles of DNA methylation and chromatin accessibility"
-output: 
-  BiocStyle::html_document: 
-    fig_width: 10
-    fig_height: 8
+title: "Plot ratio of TSS CG/GC with respect to background as a QC metric"
 ---
 
 ```{r load_modules, echo=FALSE, include=FALSE}
@@ -23,18 +19,17 @@ if (grepl("ricard",Sys.info()['nodename'])) {
 } else {
   stop("Computer not recognised")
 }
-
 source(paste0(base,"/load_settings.R"))
 
-io$outdir <- paste0(io$basedir,"/metacc/profiles")
-dir.create(io$outdir, showWarnings = F)
+
+io$precomputed.data <- paste0(io$basedir,"/metacc/precomputed.rds")
+io$outdir <- paste0(io$basedir,"/metacc/profiles/qc_ratios"); dir.create(io$outdir, showWarnings = F)
 ```
 
 <!-- Load pre-computed object -->
 
 ```{r}
-# saveRDS(data, paste0(io$outdir,"/precomputed.rds"))
-data <- readRDS(paste0(io$outdir,"/precomputed.rds"))
+data <- readRDS(io$precomputed.data)
 ```
 
 <!-- Load genome-wide global methylation and accessibility rates -->
@@ -55,7 +50,7 @@ stats <- rbind(
 <!-- Calculate CG and GC ratio -->
 
 ```{r}
-to.plot <- data[,.(ratio=mean(.SD[abs(dist)==0,rate])/mean(.SD[abs(dist)==2000,rate])), by=c("sample","context")] %>%
+to.plot <- data[,.(ratio=mean(.SD[abs(dist)<100,rate])/mean(.SD[abs(dist)==2000,rate])), by=c("sample","context")] %>%
   .[,context:=paste0("ratio_",context)] %>%
   dcast(sample~context, value.var="ratio") %>% 
   merge(stats %>% dcast(formula=sample~context, value.var=c("mean","coverage")), by="sample") %>%

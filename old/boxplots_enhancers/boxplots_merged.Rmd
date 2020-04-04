@@ -47,7 +47,7 @@ io$sample.metadata1 <- "/Users/ricard/data/gastrulation/sample_metadata_scNMT.tx
 io$met.dir1 <- "/Users/ricard/data/gastrulation/met/parsed"
 io$acc.dir1 <- "/Users/ricard/data/gastrulation/acc/parsed"
 
-# Guo2017
+# Guo2017_preimplantation
 io$sample.metadata2 <- "/Users/ricard/data/Guo_2017/sample_metadata.txt"
 io$met.dir2 <- "/Users/ricard/data/Guo_2017/met/feature_level"
 io$acc.dir2 <- "/Users/ricard/data/Guo_2017/acc/feature_level"

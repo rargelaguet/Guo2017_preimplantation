@@ -1,5 +1,5 @@
 ---
-title: "Guo2017: quantification of DNA accessibility in mithocondrial DNA"
+title: "Guo2017_preimplantation: quantification of DNA accessibility in mithocondrial DNA"
 output: 
   BiocStyle::html_document: 
     fig_width: 10

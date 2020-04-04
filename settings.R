@@ -5,10 +5,9 @@
 
 io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
-  io$basedir <- "/Users/ricard/data/Guo_2017"
+  io$basedir <- "/Users/ricard/data/Guo2017_preimplantation_preimplantation"
 } else if (grepl("yoda",Sys.info()['nodename'])) {
-  io$basedir <- "/hps/nobackup2/stegle/users/ricard/Guo_2017"
-  # io$basedir <- "/hps/nobackup2/research/stegle/users/Guo_2017"
+  io$basedir <- "/hps/nobackup2/stegle/users/ricard/Guo2017_preimplantation_preimplantation"
 } else {
   stop("Computer not recognised")
 }

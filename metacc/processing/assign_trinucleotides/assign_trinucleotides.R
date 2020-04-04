@@ -13,12 +13,12 @@ suppressMessages(library(argparse))
 ################################
 
 p <- ArgumentParser(description='')
-p$add_argument('-c','--context', type="character",help='cg/CG or gc/GC')
+p$add_argument('-c', '--context', type="character",help='cg/CG or gc/GC')
   
-opts <- p$parse_args(commandArgs(TRUE))
+args <- p$parse_args(commandArgs(TRUE))
 
-opts$context <- toupper(opts$context)
-stopifnot(opts$context %in% c("CG","GC"))
+args$context <- toupper(args$context)
+stopifnot(args$context %in% c("CG","GC"))
 
 ################
 ## Define I/0 ##
@@ -26,14 +26,16 @@ stopifnot(opts$context %in% c("CG","GC"))
 
 if (grepl("ricard",Sys.info()['nodename'])) {
   source("/Users/ricard/Guo_2017/settings.R")
-} else if (grepl("ricard",Sys.info()['nodename'])) {
+} else if (grepl("yoda",Sys.info()['nodename'])) {
   source("/homes/ricard/Guo_2017/settings.R")
+} else {
+  stop("Computer not recognised")
 }
 
-if (opts$context=="CG") {
+if (args$context=="CG") {
   io$indir <- paste0(io$basedir,"/met/cpg_level")
   io$outdir <- paste0(io$basedir,"/met/trinucleotides")
-} else if (opts$context=="GC") {
+} else if (args$context=="GC") {
   io$indir <- paste0(io$basedir,"/acc/gpc_level")
   io$outdir <- paste0(io$basedir,"/acc/trinucleotides")
 }
@@ -46,9 +48,9 @@ dir.create(io$outdir, showWarnings = F)
 # List of chromosomes
 opts$chr <- c(1:19,"X","Y","M")
 
-if (opts$context=="CG") {
+if (args$context=="CG") {
   opts$trinucleotides <- c("ACG","TCG","CCG","GCG")
-} else if (opts$context=="GC") {
+} else if (args$context=="GC") {
   opts$trinucleotides <- c("AGC","TGC","CGC","GGC")
 }
 
@@ -61,16 +63,16 @@ samples <- sub(".tsv.gz","",list.files(io$indir,pattern="(.tsv.gz)$"))
 
 # Create data.frame to store the output
 stats <- data.table(expand.grid(samples,opts$chr)) %>% setnames(c("sample","chr"))
-if (opts$context=="CG") {
+if (args$context=="CG") {
   stats %>% .[,c("ACG","TCG","CCG","GCG"):=as.numeric(NA)]
-} else if (opts$context=="GC") {
+} else if (args$context=="GC") {
   stats %>% .[,c("AGC","TGC","CGC","GGC"):=as.numeric(NA)]
 }
 stats <- stats %>% melt(id.vars=c("sample","chr"), variable.name="trinucleotide", value.name="N")
 
 
-for (i in 1:5) {
-# for (i in 1:length(samples)) {
+# for (i in 1:5) {
+for (i in 1:length(samples)) {
   cat(sprintf("\nProcessing %s...\n",samples[i]))
   
   # Load data
@@ -91,6 +93,7 @@ for (i in 1:5) {
   data <- data %>% .[chr%in%opts$chr]
   
   # Add one to the coordinates do to 0-based index
+  TO-DO: CHECK IF THIS IS NECESSARY.
   data[,pos:=pos+1]
     
   # Get sequence for the central base
@@ -101,10 +104,10 @@ for (i in 1:5) {
   data <- data[base%in%c("C","G")]
   
   # Add strand information
-  if (opts$context=="CG") {
+  if (args$context=="CG") {
     data[,strand:=ifelse(base=="C","+","-")]
     data[,base:="C"]
-  } else if (opts$context=="GC") {
+  } else if (args$context=="GC") {
     data[,strand:=ifelse(base=="G","+","-")]
     data[,base:="G"]
   }
