@@ -1,4 +1,3 @@
-suppressMessages(library(argparse))
 suppressMessages(library(data.table))
 suppressMessages(library(scater))
 suppressMessages(library(purrr))

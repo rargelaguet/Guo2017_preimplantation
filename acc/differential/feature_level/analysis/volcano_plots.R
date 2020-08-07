@@ -8,7 +8,7 @@ library(purrr)
 library(ggplot2)
 library(RColorBrewer)
 
-source("/Users/ricard/human_embryo_multiomics/acc/differential/feature_level/analysis/utils.R")
+source("/Users/ricard/Guo2017_preimplantation/acc/differential/feature_level/analysis/utils.R")
 
 #####################
 ## Define settings ##
@@ -16,54 +16,22 @@ source("/Users/ricard/human_embryo_multiomics/acc/differential/feature_level/ana
 
 ## I/O ##
 io <- list()
-io$input.dir <- "/Users/ricard/data/human_embryo_multiomics/acc/differential/feature_level"
-io$outdir <- "/Users/ricard/data/human_embryo_multiomics/acc/differential/feature_level/pdf"
+io$input.dir <- "/Users/ricard/data/Guo2017_preimplantation/acc/differential/feature_level"
+io$outdir <- "/Users/ricard/data/Guo2017_preimplantation/acc/differential/feature_level/pdf"
 dir.create(io$outdir, showWarnings = F)
 
 ## Options ##
 opts <- list()
 
 opts$comparisons <- c(
-  "E6ICMEPI_vs_E6TE"
+  "ICM_vs_TE"
 )
 
 # Select genomic contexts
 opts$annos <- c(
-  "2cell_H3K27me3",
-  "4cell_3PN_H3K4me3",
-  "4cell_H3K27me3",
-  "8cell_3PN_H3K27me3",
-  "8cell_H3K27ac",
-  "CGI",
-  "H1_H3K27ac",
-  "H1_H3K27me3",
-  "H1_H3K4me1",
-  "H1_H3K4me3",
-  "H1_distal_H3K27ac",
-  "ICM_H3K27ac",
-  "ICM_H3K4me3",
-  "TE_H3K27me3",
-  "atac_peaks_2cell_2pn",
-  "atac_peaks_2cell_3pn",
-  "atac_peaks_4cell_3pn",
-  "atac_peaks_8cell_2pn",
-  "atac_peaks_8cell_3pn",
-  "atac_peaks_icm_2pn",
-  "distal_4cell_3PN_H3K4me3",
-  "distal_8cell_H3K27ac",
-  "distal_ICM_H3K27ac",
-  "distal_ICM_H3K4me3",
-  "genebody",
-  "prom_2000_2000",
-  "prom_2000_2000_cgi",
-  "prom_2000_2000_noncgi",
   "prom_200_200",
   "prom_200_200_cgi",
-  "prom_200_200_noncgi",
-  "proximal_4cell_3PN_H3K4me3",
-  "proximal_8cell_H3K27ac",
-  "proximal_ICM_H3K27ac",
-  "proximal_ICM_H3K4me3"
+  "prom_200_200_noncgi"
 )
 
 # Minimum differential levels (%) for statistical significance

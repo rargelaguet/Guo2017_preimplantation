@@ -4,13 +4,11 @@
 options(warn=-1)
 suppressMessages(library(data.table))
 suppressMessages(library(stringr))
-suppressMessages(library(doParallel))
 suppressMessages(library(argparse))
 
 # Initialize argument parser
 p <- ArgumentParser(description='')
 p$add_argument('-c','--context', type="character",  help='cg/CG or gc/GC')
-p$add_argument('-n','--cores',   type="integer",    help='Number of cores')
 
 # Read arguments
 args <- p$parse_args(commandArgs(TRUE))
@@ -21,7 +19,6 @@ args <- p$parse_args(commandArgs(TRUE))
 
 # args <- list()
 # args$context <- "CG"
-# args$cores <- 1
 
 ## I/O ##
 
@@ -84,7 +81,6 @@ cat(sprintf("- Input folder for annotation: %s\n",io$anno.folder))
 cat(sprintf("- Input folder for bismark files: %s\n",io$in.folder))
 cat(sprintf("- Output folder: %s\n",io$out.folder))
 cat(sprintf("- Annotations: %s\n", paste(opts$annos, collapse=" ")))
-cat(sprintf("- Number of cores: %d\n",args$cores))
 cat(sprintf("- Annotating CG or GC?: %s\n",args$context))
 cat("\n")
 

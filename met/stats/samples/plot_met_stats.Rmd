@@ -1,0 +1,143 @@
+---
+title: "Plot global statistics of DNA methylation per cell"
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(ggpubr)
+```
+
+Load default settings
+```{r define_opts, echo=FALSE}
+source("/Users/ricard/human_embryo_multiomics/settings.R")
+```
+
+Define I/O 
+```{r}
+io$outdir <- paste0(io$basedir,"/met/stats/pdf")
+```
+
+Define options
+```{r}
+opts$stages <- c(
+  "E3", 
+  "E4", 
+  "E5",
+  "E6",
+  "E7"
+  # "E10"
+)
+
+opts$lineages <- c(
+  "Prelineage",
+  "Morula",
+  "ICM",
+  "Epiblast",
+  "TE_mural",
+  "TE_polar",
+  "PrE"
+)
+
+
+# opts$labs <- c(
+#   "lanner", 
+#   "nichols",
+#   "Petropolous"
+# )
+```
+
+Update sample metadata
+```{r}
+sample_metadata <- sample_metadata %>%
+  .[,lineage:=factor(lineage,levels=opts$lineages)] %>%
+  .[pass_metQC==T & stage%in%opts$stages & lineage%in%opts$lineages] %>%
+  droplevels
+```
+
+Load pre-computed estimates
+```{r read_stats, echo=FALSE}
+stats <- fread(io$met.stats) %>% 
+  merge(sample_metadata, by="id_met")
+```
+
+<!-- Regress out effect of library size -->
+```{r}
+# stats[,mean_regressed := lm(formula=mean~log(coverage))[["coefficients"]][1] + lm(formula=mean~log(coverage))[["residuals"]], by=c("stage_lineage")]
+
+# stats[,mean_regressed := mean(mean) + lm(formula=mean~log(coverage))[["residuals"]], by=c("stage")]
+```
+
+# Plot
+
+```{r}
+to.plot <- stats
+```
+
+Boxplots with mean methylation rate per stage
+```{r}
+p <- ggboxplot(to.plot, x="sex", y="rate", fill="#F8766D") +
+  facet_grid(~lineage, scales="free_x", space = "free_x") +
+  geom_jitter(alpha=0.5, color="#F8766D", size=0.80) +
+  coord_cartesian(ylim=c(0,75)) +
+  labs(x="", y="Global methylation (%)") +
+  theme(
+    axis.text.y = element_text(size=rel(0.9))
+  )
+  # theme_bw() +
+  # theme_pub()
+print(p)
+
+
+# pdf(paste0(io$outdir,"/globalmet_stages.pdf"), width=9, height=5, useDingbats = F)
+# print(p)
+# dev.off()
+```
+
+Boxplots with mean methylation rate per lineage
+```{r}
+p <- ggboxplot(to.plot, x="lineage", y="rate", fill="#F8766D") +
+  geom_jitter(alpha=0.5, color="#F8766D", size=0.80) +
+  coord_cartesian(ylim=c(0,75)) +
+  labs(x="", y="Global methylation (%)") +
+  theme(
+    axis.text.y = element_text(size=rel(0.9))
+  )
+  # theme_bw() +
+  # theme_pub()
+print(p)
+
+
+# pdf(paste0(io$outdir,"/globalmet_stages.pdf"), width=9, height=5, useDingbats = F)
+# print(p)
+# dev.off()
+```
+
+Boxplots with coverage per lineage
+```{r}
+p <- ggboxplot(to.plot, x="lineage", y="nCG", fill="#F8766D") +
+  geom_jitter(alpha=0.5, color="#F8766D", size=0.80) +
+  labs(x="", y="Number of CpGs") +
+  theme(
+    axis.text.y = element_text(size=rel(0.9))
+  )
+  # theme_bw() +
+  # theme_pub()
+print(p)
+
+
+# pdf(paste0(io$outdir,"/globalmet_stages.pdf"), width=9, height=5, useDingbats = F)
+# print(p)
+# dev.off()
+```
+
+Correlation between mean methylation rate and coverage
+```{r}
+# to.plot[,mean2:=log2(((mean/100)+0.01)/(1-(mean/100)+0.01))]
+
+p <- ggscatter(to.plot, x="rate", y="nCG") +
+  yscale("log10", .format = TRUE) +
+  geom_smooth(method="lm") +
+  theme_classic()
+  # theme_pub()
+
+print(p)
+```

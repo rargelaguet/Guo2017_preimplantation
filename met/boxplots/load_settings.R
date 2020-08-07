@@ -31,15 +31,15 @@ opts$stages <- c(
 
 # Define genomic contexts for methylation
 opts$met.annos <- c(
-  "prom_2000_2000" = "Promoters"
+  # "prom_2000_2000"
+  "prom_2000_2000_cgi",
+  "prom_2000_2000_noncgi"
 )
 
 # Options for selecting differential hits
-opts$min.fdr <- 0.10
-opts$min.met.diff <- 25
+# opts$min.fdr <- 0.10
+# opts$min.met.diff <- 25
 
 # Update metadata
 sample_metadata <- sample_metadata %>% 
-  .[stage%in%opts$stages]
-opts$met_cells <- sample_metadata %>% .[,id_met]
-opts$acc_cells <- sample_metadata %>% .[,id_acc]
+  .[pass_metQC==T & stage%in%opts$stages]
