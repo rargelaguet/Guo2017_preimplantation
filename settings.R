@@ -10,8 +10,9 @@ io <- list()
 if (grepl("ricard",Sys.info()['nodename'])) {
   io$basedir <- "/Users/ricard/data/Guo2017_preimplantation"
   io$mm10.genome <- "/Users/ricard/data/mm10_sequence/mm10.genome"
-} else if (grepl("yoda",Sys.info()['nodename'])) {
-  io$basedir <- "/hps/nobackup2/stegle/users/ricard/Guo2017_preimplantation"
+} else if (grepl("ebi",Sys.info()['nodename'])) {
+  io$basedir <- "/hps/nobackup2/research/stegle/users/ricard/Guo2017_preimplantation"
+  io$mm10.genome <- "/hps/nobackup2/research/stegle/users/ricard/mm10_sequence/mm10.genome"
 } else {
   stop("Computer not recognised")
 }

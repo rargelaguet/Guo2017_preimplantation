@@ -13,6 +13,9 @@ opts$chr <- c(1:19,"X")
 # Update sample metadata
 sample_metadata <- sample_metadata %>% .[pass_metQC==TRUE]
 
+# Test mode
+sample_metadata <- head(sample_metadata,n=3)
+
 #####################
 ## Calculate stats ##
 #####################
@@ -26,8 +29,8 @@ for (i in sample_metadata$id_met) {
     print(i)
 
     # Load sample methylation data
-    data <- fread(sprintf("%s/%s.tsv.gz",io$met_data_raw,i)) %>%
-      .[,chr:=paste0("chr",chr)]
+    data <- fread(sprintf("%s/%s.tsv.gz",io$met_data_raw,i))# %>%
+      # .[,chr:=paste0("chr",chr)]
 
     # Compute methylation statistics per chromosome
     for (j in opts$chr) {
@@ -39,5 +42,5 @@ for (i in sample_metadata$id_met) {
     print(sprintf("Sample %s not found for methylation",i))
   }
 }
-# stats <- stats[complete.cases(stats)]
+
 fwrite(stats, paste0(io$outdir,"/stats_per_chromosome.txt.gz"), sep="\t")
