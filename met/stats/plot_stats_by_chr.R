@@ -11,7 +11,7 @@ io$outdir <- paste0(io$basedir,"/met/results/stats/pdf")
 
 # Define options
 # opts$chr <- c(paste0("chr",1:19),"X")
-opts$chr <- c(1:19,"X")
+opts$chr <- c(1:5)
 
 # Update sample metadata
 sample_metadata <- sample_metadata %>% 
@@ -81,7 +81,7 @@ for (i in unique(to.plot$stage)) {
       axis.ticks.x = element_blank()
     )
   
-  pdf(sprintf("%s/methylation_per_chr_%s.pdf",io$outdir,i), width=8, height=10)
+  pdf(sprintf("%s/per_embryo/methylation_per_chr_%s.pdf",io$outdir,i), width=8, height=10)
   # png(sprintf("%s/barplots_%s.png",io$outdir,i), width=6, height=4, units="in", res=400)
   print(p)
   dev.off()
@@ -93,9 +93,7 @@ for (i in unique(to.plot$stage)) {
 
 to.plot <- stats %>%
   .[sex_per_cell%in%c("Female","Male")] %>% droplevels %>% 
-  .[,.(rate=mean(mean)), by=c("embryo","chr","sex_per_cell","stage")]
-
-# sample_metadata[,.N,by=c("sex_per_cell","stage")]
+  .[,.(rate=mean(mean)), by=c("chr","id_met","sex_per_cell","stage")]
 
 p <- ggplot(to.plot, aes_string(x="chr", y="rate", fill="sex_per_cell")) +
   geom_boxplot(color="black") +

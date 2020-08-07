@@ -22,12 +22,12 @@ io$gene_metadata <- paste0(io$basedir,"/features/genes/Mmusculus_genes_BioMart.8
 io$met_data_raw <- paste0(io$basedir,"/met/cpg_level")
 io$met_data_parsed <- paste0(io$basedir,"/met/feature_level")
 io$met.stats <- paste0(io$basedir,"/met/results/stats/sample_stats.txt")
-io$met.stats_per_chr <- paste0(io$basedir,"/met/results/stats/sample_stats_per_chr.txt")
+io$met.stats_per_chr <- paste0(io$basedir,"/met/results/stats/stats_per_chromosome.txt.gz")
 
 io$acc_data_raw <- paste0(io$basedir,"/acc/gpc_level")
 io$acc_data_parsed <- paste0(io$basedir,"/acc/feature_level")
 io$acc.stats <- paste0(io$basedir,"/acc/results/stats/sample_stats.txt")
-io$acc.stats_per_chr <- paste0(io$basedir,"/acc/results/stats/sample_stats_per_chr.txt")
+io$acc.stats_per_chr <- paste0(io$basedir,"/acc/results/stats/stats_per_chromosome.txt.gz")
 
 io$features.dir <- paste0(io$basedir,"/features/filt")
 
