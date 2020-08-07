@@ -1,0 +1,108 @@
+---
+title: "Sex determination per cell based on GC coverage along chrY"
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(ggpubr)
+```
+
+Define settings
+```{r define_opts, echo=FALSE}
+if (grepl("ricard",Sys.info()['nodename'])) {
+  source("/Users/ricard/Guo2017_preimplantation/settings.R")
+} else {
+  stop("Computer not recognised")
+}
+io$outdir <- paste0(io$basedir,"/acc/results/sex")
+
+# Define stages
+opts$stages <- c(
+  "Zygote",
+  "2-cell",
+  "4-cell",
+  "8-cell",
+  "Morula",
+  "ICM",
+  "TE"
+)
+
+# Define which chromosomes to look at
+opts$chr <- c("X","Y","1") %>% paste0("chr",.)
+```
+
+Update sample metadata
+```{r}
+sample_metadata <- sample_metadata %>% 
+  .[!is.na(id_acc) & stage%in%opts$stages]
+```
+
+# Load data
+
+Load DNA methylation statistics per chromosome
+```{r}
+stats <- fread(io$acc.stats_per_chr) %>%
+  .[,chr:=paste0("chr",chr)] %>%
+  .[chr%in%opts$chr] %>%
+  merge(sample_metadata, by="id_acc") %>%
+  .[,.(coverage=sum(coverage)), by=c("id_acc","stage","chr")]
+```
+
+# Plot
+
+```{r}
+to.plot <- stats %>% 
+  data.table::dcast(id_acc+stage~chr, value.var="coverage") %>%
+  .[,ratio:=chrY/chr1]
+```
+
+Define sex
+```{r}
+opts$female <- 0.002      # Less than this is female
+opts$male <- 0.00201    # More than this is male
+# to.plot[ratio>op]
+
+to.plot$sex <- cut(to.plot$ratio, 
+  breaks = c(-0.01,opts$female, opts$male,Inf),
+  labels = c("Female","Unassigned","Male")
+)
+```
+
+
+Plot ratio of coverage between Y chr and X chr
+```{r}
+p <- ggbarplot(to.plot, x="id_acc", y="ratio", fill="sex", sort.val="asc") +
+  facet_grid(~stage, scales="free_x", space = "free_x") +
+  labs(x="Embryo", y="ratio chrY/chr1 coverage") +
+  geom_hline(yintercept=opts$female, linetype="dashed") +
+  theme(
+    legend.title = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )
+
+pdf(paste0(io$outdir,"/sex_assignment_acc_per_cell.pdf"), width=9, height=5, useDingbats = F)
+print(p)
+dev.off()
+```
+
+Save results
+```{r}
+# fwrite(to.plot, paste0(io$outdir,"/sex_assignment_acc.txt.gz"))
+```
+
+Add to sample metadata
+```{r}
+to.save <- to.plot[,c("id_acc","stage","sex")] %>%
+  setnames("sex","sex_per_cell")
+
+sample_metadata <- fread(io$metadata) %>% 
+  merge(to.save, by=c("id_acc","stage"), all.x=T)
+
+sample_metadata[sex!=sex_per_cell]
+sample_metadata[sex!=sex_per_cell,sex_per_cell:=sex]
+```
+
+```{r}
+# fwrite(sample_metadata, io$metadata, sep="\t", na="NA", quote=F)
+```
+

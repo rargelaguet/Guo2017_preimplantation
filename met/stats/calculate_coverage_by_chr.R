@@ -2,10 +2,13 @@
 ## Define settings ##
 #####################
 
-source("/Users/ricard/Guo2017_preimplantation/settings.R")
+source("/homes/ricard/Guo2017_preimplantation/settings.R")
 
 # Define I/O
-io$outdir <- paste0(io$basedir,"/met/stats")
+io$outdir <- paste0(io$basedir,"/met/results/stats")
+
+# Define chromosome
+opts$chr <- c(1:19,"X")
 
 # Update sample metadata
 sample_metadata <- sample_metadata %>% .[pass_metQC==TRUE]
@@ -14,7 +17,7 @@ sample_metadata <- sample_metadata %>% .[pass_metQC==TRUE]
 ## Calculate stats ##
 #####################
 
-stats <- data.table(expand.grid(sample_metadata$id_met,opts$chr)) %>% 
+stats <- data.table(expand.grid(as.character(sample_metadata$id_met),opts$chr)) %>% 
   setnames(c("id_met","chr")) %>%
   .[,c("nreads","coverage","mean"):=as.numeric(NA)]
 

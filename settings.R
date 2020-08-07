@@ -20,13 +20,13 @@ io$metadata <- paste0(io$basedir,"/sample_metadata.txt")
 io$gene_metadata <- paste0(io$basedir,"/features/genes/Mmusculus_genes_BioMart.87.txt")
 io$met_data_raw <- paste0(io$basedir,"/met/cpg_level")
 io$met_data_parsed <- paste0(io$basedir,"/met/feature_level")
-io$met.stats <- paste0(io$basedir,"/met/stats/sample_stats.txt")
-io$met.stats_per_chr <- paste0(io$basedir,"/met/stats/sample_stats_per_chr.txt")
+io$met.stats <- paste0(io$basedir,"/met/results/stats/sample_stats.txt")
+io$met.stats_per_chr <- paste0(io$basedir,"/met/results/stats/sample_stats_per_chr.txt")
 
 io$acc_data_raw <- paste0(io$basedir,"/acc/gpc_level")
 io$acc_data_parsed <- paste0(io$basedir,"/acc/feature_level")
-io$acc.stats <- paste0(io$basedir,"/acc/stats/sample_stats.txt")
-io$acc.stats_per_chr <- paste0(io$basedir,"/acc/stats/sample_stats_per_chr.txt")
+io$acc.stats <- paste0(io$basedir,"/acc/results/stats/sample_stats.txt")
+io$acc.stats_per_chr <- paste0(io$basedir,"/acc/results/stats/sample_stats_per_chr.txt")
 
 io$features.dir <- paste0(io$basedir,"/features/filt")
 
@@ -46,6 +46,8 @@ opts$stages <- c(
   "TE"
 )
 
+opts$chr <- c(1:19,"X","Y")
+
 ##########################
 ## Load sample metadata ##
 ##########################
@@ -55,6 +57,5 @@ factor.cols <- c("sample","id_met","id_acc","stage")
 sample_metadata <- fread(io$metadata) %>% 
   .[stage%in%opts$stages] %>%
   .[,(factor.cols):=lapply(.SD, as.factor),.SDcols=(factor.cols)] %>%
-  .[,stage:=factor(stage,levels=opts$stages)] %>%
-  droplevels
+  .[,stage:=factor(stage,levels=opts$stages)]
   

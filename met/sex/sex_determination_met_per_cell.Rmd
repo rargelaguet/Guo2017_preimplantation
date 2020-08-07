@@ -1,5 +1,5 @@
 ---
-title: "Sex determination based on CG coverage in the chromosome Y"
+title: "Sex determination per cell based on CG coverage along chrY"
 ---
 
 ```{r load_modules, echo=FALSE, include=FALSE}
@@ -33,7 +33,7 @@ opts$chr <- c("X","Y","1") %>% paste0("chr",.)
 Update sample metadata
 ```{r}
 sample_metadata <- sample_metadata %>% 
-  .[!is.na(embryo) & !is.na(id_met) & stage%in%opts$stages]
+  .[!is.na(id_met) & stage%in%opts$stages]
 ```
 
 # Load data
@@ -44,17 +44,15 @@ stats <- fread(io$met.stats_per_chr) %>%
   .[,chr:=paste0("chr",chr)] %>%
   .[chr%in%opts$chr] %>%
   merge(sample_metadata, by="id_met") %>%
-  .[,.(coverage=sum(coverage)), by=c("embryo","stage","chr")]
-# stats <- stats[complete.cases(stats)]
+  .[,.(coverage=sum(coverage)), by=c("id_met","stage","chr")]
 ```
 
 # Plot
 
 ```{r}
 to.plot <- stats %>% 
-  dcast(embryo+stage~chr, value.var="coverage") %>%
-  .[,ratio:=chrY/chr1]# %>%
-  # merge(sex.dt,by="embryo")
+  data.table::dcast(id_met+stage~chr, value.var="coverage") %>%
+  .[,ratio:=chrY/chr1]
 ```
 
 Define sex
@@ -72,7 +70,7 @@ to.plot$sex <- cut(to.plot$ratio,
 
 Plot ratio of coverage between Y chr and X chr
 ```{r}
-p <- ggbarplot(to.plot, x="embryo", y="ratio", fill="sex", sort.val="asc") +
+p <- ggbarplot(to.plot, x="id_met", y="ratio", fill="sex", sort.val="asc") +
   facet_grid(~stage, scales="free_x", space = "free_x") +
   labs(x="Embryo", y="ratio chrY/chr1 coverage") +
   geom_hline(yintercept=opts$female, linetype="dashed") +
@@ -82,9 +80,9 @@ p <- ggbarplot(to.plot, x="embryo", y="ratio", fill="sex", sort.val="asc") +
     axis.text.x = element_blank()
   )
 
-pdf(paste0(io$outdir,"/sex_assignment_met.pdf"), width=9, height=5, useDingbats = F)
+# pdf(paste0(io$outdir,"/sex_assignment_met.pdf"), width=9, height=5, useDingbats = F)
 print(p)
-dev.off()
+# dev.off()
 ```
 
 Save results
@@ -94,10 +92,11 @@ Save results
 
 Add to sample metadata
 ```{r}
-to.save <- to.plot[,c("embryo","stage","sex")]
+to.save <- to.plot[,c("id_met","stage","sex")] %>%
+  setnames("sex","sex_per_cell")
 
 sample_metadata <- fread(io$metadata) %>% 
-  merge(to.save, by=c("embryo","stage"), all.x=T)
+  merge(to.save, by=c("id_met","stage"), all.x=T)
 
 table(sample_metadata$sex)
 table(sample_metadata[is.na(sex),stage])
@@ -107,6 +106,6 @@ table(sample_metadata[is.na(sex),stage])
 ```
 
 ```{r}
-fwrite(sample_metadata, io$metadata, sep="\t", na="NA", quote=F)
+# fwrite(sample_metadata, io$metadata, sep="\t", na="NA", quote=F)
 ```
 
