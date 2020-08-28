@@ -11,11 +11,13 @@ io$outdir <- paste0(io$basedir,"/acc/results/stats/pdf")
 
 # Define options
 # opts$chr <- c(paste0("chr",1:19),"X")
-opts$chr <- c(1:19,"X")
+# opts$chr <- c(1:19,"X")
+opts$chr <- c(1:5)
 
 # Update sample metadata
 sample_metadata <- sample_metadata %>% 
-  .[!is.na(id_acc)] %>%
+  # .[!is.na(id_acc)] %>%
+  .[pass_accQC==TRUE] %>%
   droplevels
 
 ############################
@@ -62,14 +64,14 @@ mm10.genome <- fread(io$mm10.genome) %>%
 ##############################################
 
 to.plot <- stats %>%
-  .[sex_per_cell%in%c("Female","Male")] %>% droplevels %>% 
-  .[,.(rate=mean(mean)), by=c("embryo","chr","sex_per_cell","stage")]
+  .[sex_per_embryo%in%c("Female","Male")] %>% droplevels %>% 
+  .[,.(rate=mean(mean)), by=c("embryo","chr","sex_per_embryo","stage")]
 
 # sample_metadata[,.N,by=c("sex_per_cell","stage")]
 
 for (i in unique(to.plot$stage)) {
   # p <- ggbarplot(to.plot[stage==i], x="sex", y="rate", fill="sex", stat="identity") +
-  p <- ggplot(to.plot[stage==i], aes_string(x="embryo", group="embryo", y="rate", fill="sex_per_cell")) +
+  p <- ggplot(to.plot[stage==i], aes_string(x="embryo", group="embryo", y="rate", fill="sex_per_embryo")) +
     geom_bar(stat="identity", color="black") +
     # geom_hline(yintercept=1, linetype="dashed") +
     facet_wrap(~chr, scales="fixed") +
@@ -93,7 +95,7 @@ for (i in unique(to.plot$stage)) {
 
 to.plot <- stats %>%
   .[sex_per_cell%in%c("Female","Male")] %>% droplevels %>% 
-  .[,.(rate=mean(mean)), by=c("embryo","chr","sex_per_cell","stage")]
+  .[,.(rate=mean(mean)), by=c("chr","id_acc","sex_per_cell","stage")]
 
 # sample_metadata[,.N,by=c("sex_per_cell","stage")]
 
@@ -102,7 +104,6 @@ p <- ggplot(to.plot, aes_string(x="chr", y="rate", fill="sex_per_cell")) +
   facet_wrap(~stage, scales="fixed") +
   labs(x="", y="Global DNA accessibility (%)") +
   theme_classic() +
-  coord_cartesian(ylim=c(10,55)) +
   theme(
     legend.position = "top",
     legend.title = element_blank(),

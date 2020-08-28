@@ -33,7 +33,7 @@ opts$n_perms <- 10         # Number of permutations
 
 # Define genomic contexts
 opts$annos <- c(
-  # "genebody",
+  "genebody",
   "prom_2000_2000_cgi",
   "prom_2000_2000_noncgi"
   # "prom_2000_2000"

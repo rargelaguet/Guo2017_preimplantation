@@ -1,0 +1,70 @@
+---
+title: "Plot local correlation between DNA methylation and chromatin accessibility"
+---
+
+Define settings
+```{r define_settings, echo=FALSE, include=FALSE}
+if (grepl("ricard",Sys.info()['nodename'])) {
+  source("/Users/ricard/Guo2017_preimplantation/settings.R")
+} else {
+  stop("Computer not recognised")
+}
+io$outdir <- paste0(io$basedir,"/metacc/coupling/local_coupling")
+
+# Define lineages
+```
+
+Update sample metadata
+```{r}
+sample_metadata <- sample_metadata %>%
+  # .[pass_metQC==TRUE & pass_accQC==TRUE]
+  .[!is.na(id_met) & !is.na(id_acc)]
+```
+
+
+Load precomputed data
+```{r}
+to.plot <- fread(paste0(io$outdir,"/data.txt.gz")) %>%
+  merge(sample_metadata[,c("sample","lineage")],by="sample") %>%
+  .[lineage%in%opts$lineages]
+```
+
+Plot per cell
+```{r}
+for (i in unique(to.plot$sample)) {
+  
+  p <- ggplot(to.plot[sample==i], aes(x=window_center, y=r)) +
+    stat_summary(fun.data=mean_sd, geom="smooth", alpha=0.2, size=1.0, color="black", fill="black") +
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.5) +
+    geom_vline(xintercept=0, linetype="dashed", color="black", size=0.5) +
+    ylab("Correlation") + xlab("Genomic distance from TSS (bp)") +
+    # scale_x_continuous(limits=c(-opts$up,opts$down)) +
+    # coord_cartesian(ylim=c(0.25,0)) +
+    # scale_y_continuous(limits=c(-0.45,0.25), expand=c(0,0)) +
+    theme_classic()
+  
+  pdf(sprintf("%s/per_cell/%s_metacc_local_coupling.pdf",io$outdir,i), width=6.5, height=5)
+  print(p)
+  dev.off()
+}
+```
+
+Plot per lineage
+```{r}
+p <- ggplot(to.plot, aes(x=window_center, y=r)) +
+  stat_summary(aes(fill=lineage, color=lineage), fun.data=mean_sd, geom="smooth", alpha=0.2, size=1.0) +
+  geom_hline(yintercept=0, linetype="dashed", color="black", size=0.5) +
+  geom_vline(xintercept=0, linetype="dashed", color="black", size=0.5) +
+  ylab("Correlation") + xlab("Genomic distance from TSS (bp)") +
+  # scale_x_continuous(limits=c(-opts$up,opts$down)) +
+  # coord_cartesian(ylim=c(0.25,0)) +
+  # scale_y_continuous(limits=c(-0.45,0.25), expand=c(0,0)) +
+  theme_classic() +
+  theme(
+    legend.title = element_blank()
+  )
+
+pdf(paste0(io$outdir,"/metacc_local_coupling.pdf"), width=6.5, height=5)
+print(p)
+dev.off()
+```

@@ -1,0 +1,114 @@
+---
+title: "chrX inactivation: met/acc patterns"
+---
+
+Define settings
+```{r define_opts, echo=FALSE}
+if (grepl("ricard",Sys.info()['nodename'])) {
+  source("/Users/ricard/Guo2017_preimplantation/metacc/chrX_inactivation/load_settings.R")
+} else if (grepl("ebi",Sys.info()['nodename'])) {
+} else {
+  stop("Computer not recognised")
+}
+sample_metadata[,length(unique(embryo)),by=c("sex","stage")]
+```
+
+Load precomputed methylation and accessibility estimates
+```{r}
+# metacc_dt <- fread(paste0(io$outdir,"/test.tsv.gz")) %>%
+metacc_dt <- fread("/Users/ricard/data/Guo2017_preimplantation/metacc/stats/metacc_stats_anno_chr.tsv.gz") %>%
+  .[anno%in%opts$annos]
+# unique(metacc_dt$anno)
+```
+
+```{r}
+to.plot <- metacc_dt %>% 
+  .[chr!="Y"] %>%
+  merge(sample_metadata,by="sample") %>% 
+  # .[,chr_type:=c("autosomes","chrX")[as.numeric(chr=="X")+1]] %>%
+  .[,.(rate=mean(rate)),by=c("stage","sex","chr","anno","context")] %>%
+  .[,anno:=factor(anno,levels=opts$annos)]
+# to.plot <- to.plot[chr%in%c("1","X","2","3","4","5","6","7","8")]
+```
+
+```{r}
+# for (i in opts$stages) {
+#   p <- ggplot(to.plot[stage==i & context=="CG"], aes(x=sex, y=anno, fill=rate)) +
+#     ggtitle(i) +
+#     geom_tile(color="black") +
+#     scale_fill_distiller(palette = "YlOrRd", direction=1) +
+#     facet_wrap(~chr, nrow=1) +
+#     labs(x="", y="") +
+#     theme_classic() +
+#     theme(
+#       axis.text = element_text(color="black"),
+#       axis.line = element_blank(),
+#       axis.ticks = element_blank(),
+#       legend.title = element_blank()
+#     )
+#   print(p)
+# }
+```
+
+```{r}
+to.plot <- metacc_dt %>% 
+  .[chr!="Y"] %>%
+  merge(sample_metadata,by="sample") %>% 
+  .[,.(rate=mean(rate)),by=c("stage","sex","chr","anno","context")] %>%
+  # .[,anno:=factor(anno,levels=opts$annos)]
+  dcast(stage+anno+chr+context~sex,value.var="rate") %>%
+  .[,c("ratio","diff"):=list(Female/Male,Female-Male)] %>%
+  # .[,log_ratio:=log2(ratio))] %>%
+  .[,chr_type:=c("autosomes","chrX")[as.numeric(chr=="X")+1]]
+```
+
+Not enough data for the line plot
+```{r message=FALSE}
+# foo <- opts$chr %>% gsub("chr","",.) %>% .[-length(opts$chr)]
+# chr_color <- rep("gray70",length(foo))
+# names(chr_color)  <- foo
+
+# for (i in c("CG","GC")) {
+#   chr_color[names(chr_color)=="X"] <- c("CG"="red", "GC"="blue")[[i]]
+#   p <- ggline(to.plot[context==i], x="stage", y="ratio", color="chr", palette = "jco", facet="anno") +
+#   # ggline(to.plot2[context=="CG"], x="stage", y="ratio", color="chr_type", palette = "jco", facet="anno", add="mean_se") +
+#     scale_color_manual(values=chr_color) +
+#     labs(x="", y="Female/Male ratio") +
+#     coord_cartesian(ylim=c(0.1,1.9)) +
+#     geom_hline(linetype="dashed", yintercept=1) +
+#     ggtitle(i) +
+#     theme(
+#       axis.text = element_text(size=rel(0.75)),
+#       legend.position = "none",
+#       legend.title = element_blank()
+#       # axis.text.x = element_text(size=rel(0.75), color="black", angle=40, vjust=1, hjust=1)
+#     )
+#   print(p)
+# }
+```
+
+# Bar plots
+
+```{r}
+to.plot <- metacc_dt %>% 
+  .[chr!="Y"] %>%
+  merge(sample_metadata,by="sample") %>% 
+  .[,.(rate=mean(rate)),by=c("stage","sex","chr","anno","context")] %>% 
+  .[,chr_type:=c("autosomes","chrX")[as.numeric(chr=="X")+1]] %>%
+  data.table::dcast(stage+anno+chr_type+context~sex, value.var="rate", fun.aggregate=median) %>%
+  .[,c("ratio","diff"):=list(Female/Male,Female-Male)]
+```
+
+```{r}
+ggbarplot(to.plot[context=="CG"], x="stage", y="ratio", fill="chr_type", palette = "jco", facet="anno", position = position_dodge(0.8)) +
+  labs(x="", y="Female/Male ratio (methylation)") +
+  geom_hline(linetype="dashed", yintercept=1) +
+  theme(
+    # axis.ticks.x = element_blank(),
+    legend.position = "top",
+    legend.title = element_blank(),
+    axis.text.x = element_text(size=rel(0.65), color="black", angle=30, vjust=1, hjust=1),
+    axis.text.y = element_text(size=rel(0.75), color="black"),
+    axis.title.y = element_text(size=rel(0.75), color="black")
+  )
+```

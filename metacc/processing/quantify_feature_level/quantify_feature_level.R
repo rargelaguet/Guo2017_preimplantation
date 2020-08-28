@@ -69,10 +69,6 @@ opts$annos <- c(
 )
 
 
-
-
-
-
 if (opts$annos == "all")
   opts$annos <- sapply(str_split(list.files(io$features.dir, pattern = "\\.bed.gz$"),"\\.bed.gz"),"[[", 1)
 
@@ -144,8 +140,8 @@ for (i in 1:length(samples_keep)) {
         # Overlap data with annotations
         for (anno in opts$annos) {
           # fname.out <- sprintf("%s/tmp/%s_%s.tsv",io$out.folder,sample,anno)
-          fname.out <- sprintf("%s/tmp/%s_%s",io$out.folder,sample,anno)
-          if (file.exists(paste0(fname.out,".gz"))) {
+          fname.out <- sprintf("%s/tmp/%s_%s.gz",io$out.folder,sample,anno)
+          if (file.exists(fname.out)) {
             cat(sprintf("Annotation for %s with %s already found, loading...\n",sample,anno))
           } else {
             cat(sprintf("Annotating %s with %s annotations...\n",sample,anno))
@@ -160,7 +156,6 @@ for (i in 1:length(samples_keep)) {
 
             # Store and save results
             fwrite(ov, fname.out, quote=FALSE, sep="\t", col.names=FALSE, row.names=FALSE)
-            system(sprintf("gzip -f %s",fname.out))
           }
         }
         rm(dat_sample)

@@ -1,0 +1,116 @@
+---
+title: ""
+---
+
+```{r load_modules, echo=FALSE, include=FALSE}
+library(ggpubr)
+```
+
+Load default settings
+```{r}
+if (grepl("ricard",Sys.info()['nodename'])) {
+  source("/Users/ricard/Guo2017_preimplantation/settings.R")
+} else {
+  stop("Computer not recognised")
+}
+```
+
+Define I/O
+```{r}
+# io$met <- paste0(io$basedir,"/met/results/heatmap/heatmap_met.tsv.gz")
+# io$acc <- paste0(io$basedir,"/acc/results/heatmap/heatmap_acc.tsv.gz")
+io$outdir <- paste0(io$basedir,"/metacc/scatterplots")
+```
+
+Define options
+```{r}
+opts$stages <- c(
+  "Zygote",
+  "2cell",
+  "4cell",
+  "8cell",
+  "Morula", 
+  "ICM", 
+  "TE",
+  "hESC"
+)
+```
+
+Update sample metadata
+```{r}
+sample_metadata <- sample_metadata %>% 
+  .[stage%in%opts$stages] %>%
+  # .[pass_metQC==TRUE & pass_accQC==TRUE]
+  .[!is.na(id_met) & !is.na(id_acc)]
+```
+
+
+Load precomputed estimates
+```{r}
+# met_dt <- fread(io$met) %>% unique %>% .[,assay:="met"] %>%
+#   merge(sample_metadata[,c("id_met","sample","stage")]) %>%
+#   .[,id_met:=NULL] %>% .[stage%in%opts$stages]
+# 
+# acc_dt <- fread(io$acc) %>% unique %>% .[,assay:="acc"] %>%
+#   merge(sample_metadata[,c("id_acc","sample","stage")]) %>%
+#   .[,id_acc:=NULL] %>% .[stage%in%opts$stages]
+# 
+# dt <- rbind(met_dt,acc_dt)
+# unique(dt$anno)
+```
+
+```{r}
+dt <- fread("/Users/ricard/data/Guo2017_preimplantation/metacc/stats/metacc_stats_anno.tsv.gz") %>%
+  setnames("context","assay") %>%
+  merge(sample_metadata,by="sample")
+unique(dt$anno)
+```
+
+# Plot
+
+```{r}
+to.plot <- dt %>%
+  dcast(sample+stage+anno~assay, value.var="rate")
+```
+
+```{r}
+for (i in unique(to.plot$sample)) {
+  
+  p <- ggscatter(to.plot[sample==i], x="CG", y="GC", size=0.75,
+            add="reg.line", add.params = list(color="blue", fill="lightgray"), conf.int=TRUE) +
+    stat_cor(method = "pearson") +
+    # facet_wrap(~stage, scales="fixed", nrow=1) +
+    labs(x="DNA methylation", y="chromatin accessibility") +
+    theme(
+      axis.text = element_text(size=rel(0.8)),
+      legend.title = element_blank()
+    )
+  
+  pdf(sprintf("%s/%s_%s_metacc_scatterplot.pdf",io$outdir,sample_metadata[sample==i,stage],i), width=7, height=5)
+  print(p)
+  dev.off()
+}
+```
+
+```{r}
+# to.plot[sample=="lane6372_ACTCGCTA_GTAAGGAG_PlateB_C01"] %>% View
+to.plot[,.(r=cor(met,acc)),by="sample"] %>% View
+```
+
+
+# test
+
+```{r}
+to.plot <- dt %>%
+  .[,.(rate=mean(rate)), by=c("anno","assay","stage")] %>%
+  dcast(anno~assay+stage, value.var="rate") %>%
+  .[,change_acc:=acc_ICM-acc_8cell]#  %>%
+  # .[!anno%in%c("8cell_3PN_H3K27me3","4cell_H3K27me3")]
+```
+
+```{r}
+ggscatter(to.plot, x="met_8cell","change_acc", add="reg.line", add.params = list(color="blue", fill="lightgray"), conf.int=TRUE) +
+  labs(x="Methylation at 8cell", y="Change in accessibility from 8cell to Morula") +
+    stat_cor(method = "pearson")
+```
+
